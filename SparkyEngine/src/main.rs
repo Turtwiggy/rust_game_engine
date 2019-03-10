@@ -1,45 +1,60 @@
+extern crate glfw;
 extern crate gl;
-extern crate sdl2;
+
+use self::glfw::{Context, Key, Action};
+use std::sync::mpsc::Receiver;
+
+// settings
+const SCR_WIDTH: u32 = 1280;
+const SCR_HEIGHT: u32 = 720;
 
 fn main() {
-    let sdl = sdl2::init().unwrap();
-    let video_subsystem = sdl.video().unwrap();
+    // glfw: initialize and configure
+    // ------------------------------
+    let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
+    glfw.window_hint(glfw::WindowHint::ContextVersion(3, 3));
+    glfw.window_hint(glfw::WindowHint::OpenGlProfile(glfw::OpenGlProfileHint::Core));
+    #[cfg(target_os = "windows")]
+    glfw.window_hint(glfw::WindowHint::OpenGlForwardCompat(true));
 
-    let window = video_subsystem
-        .window("SparkyEngine", 900, 700)
-        .opengl()
-        .resizable()
-        .build()
-        .unwrap();
+    // glfw: window creation
+    // ---------------------
+    let (mut window, events) = glfw.create_window(SCR_WIDTH, SCR_HEIGHT, "SparkyEngine", glfw::WindowMode::Windowed)
+        .expect("Failed to create GLFW window.");
 
-    let _gl_context = window.gl_create_context().unwrap();
-    let _gl =
-        gl::load_with(|s| video_subsystem.gl_get_proc_address(s) as *const std::os::raw::c_void);
+    window.make_current();
+    window.set_key_polling(true);
+    window.set_framebuffer_size_polling(true);
 
-    unsafe 
-    {
-        gl::ClearColor(0.3, 0.3, 0.5, 1.0);
+    // gl: load all OpenGL function pointers
+    // -------------------------------------
+    gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
+
+    // render loop
+    // -----------
+    while !window.should_close() {
+        // events
+        // -----
+        process_events(&mut window, &events);
+
+        // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
+        // -------------------------------------------------------------------------------
+        window.swap_buffers();
+        glfw.poll_events();
     }
+}
 
-    let mut event_pump = sdl.event_pump().unwrap();
-
-    //Main game loop
-    'main: loop 
-    {
-        for event in event_pump.poll_iter() 
-        {
-            match event 
-            {
-                sdl2::event::Event::Quit { .. } => break 'main,
-                _ => {}
+// NOTE: not the same version as in common.rs!
+fn process_events(window: &mut glfw::Window, events: &Receiver<(f64, glfw::WindowEvent)>) {
+    for (_, event) in glfw::flush_messages(events) {
+        match event {
+            glfw::WindowEvent::FramebufferSize(width, height) => {
+                // make sure the viewport matches the new window dimensions; note that width and
+                // height will be significantly larger than specified on retina displays.
+                unsafe { gl::Viewport(0, 0, width, height) }
             }
+            glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => window.set_should_close(true),
+            _ => {}
         }
-
-        unsafe 
-        {
-            gl::Clear(gl::COLOR_BUFFER_BIT);
-        }
-
-        window.gl_swap_window();
     }
 }
