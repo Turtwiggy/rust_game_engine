@@ -1,0 +1,1 @@
+{"rustc":18321205956227587961,"features":"[]","target":4944179213620976468,"profile":11870183705523825133,"path":10115126592772102170,"deps":[["gl_generator v0.10.0 (https://github.com/bjz/gl-rs#10b1987f)","gl_generator",13271208082071201824]],"local":[{"Precalculated":"10b1987fb0467f85006b100e8bcaad2cf62c673e"}],"rustflags":[],"edition":"Edition2015"}

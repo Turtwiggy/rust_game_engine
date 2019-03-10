@@ -1,0 +1,2 @@
+call cargo run
+pause

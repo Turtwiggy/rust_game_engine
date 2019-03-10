@@ -1,0 +1,11 @@
+Z:\Programming\Rust-Game-Engine\SparkyEngine\target\debug\deps\libgfx_device_gl-c0b1d78adaf081ee.rlib: C:\Users\m-p-b\.cargo\registry\src\github.com-1ecc6299db9ec823\gfx_device_gl-0.15.5\src\lib.rs C:\Users\m-p-b\.cargo\registry\src\github.com-1ecc6299db9ec823\gfx_device_gl-0.15.5\src\command.rs C:\Users\m-p-b\.cargo\registry\src\github.com-1ecc6299db9ec823\gfx_device_gl-0.15.5\src\factory.rs C:\Users\m-p-b\.cargo\registry\src\github.com-1ecc6299db9ec823\gfx_device_gl-0.15.5\src\info.rs C:\Users\m-p-b\.cargo\registry\src\github.com-1ecc6299db9ec823\gfx_device_gl-0.15.5\src\shade.rs C:\Users\m-p-b\.cargo\registry\src\github.com-1ecc6299db9ec823\gfx_device_gl-0.15.5\src\state.rs C:\Users\m-p-b\.cargo\registry\src\github.com-1ecc6299db9ec823\gfx_device_gl-0.15.5\src\tex.rs
+
+Z:\Programming\Rust-Game-Engine\SparkyEngine\target\debug\deps\gfx_device_gl-c0b1d78adaf081ee.d: C:\Users\m-p-b\.cargo\registry\src\github.com-1ecc6299db9ec823\gfx_device_gl-0.15.5\src\lib.rs C:\Users\m-p-b\.cargo\registry\src\github.com-1ecc6299db9ec823\gfx_device_gl-0.15.5\src\command.rs C:\Users\m-p-b\.cargo\registry\src\github.com-1ecc6299db9ec823\gfx_device_gl-0.15.5\src\factory.rs C:\Users\m-p-b\.cargo\registry\src\github.com-1ecc6299db9ec823\gfx_device_gl-0.15.5\src\info.rs C:\Users\m-p-b\.cargo\registry\src\github.com-1ecc6299db9ec823\gfx_device_gl-0.15.5\src\shade.rs C:\Users\m-p-b\.cargo\registry\src\github.com-1ecc6299db9ec823\gfx_device_gl-0.15.5\src\state.rs C:\Users\m-p-b\.cargo\registry\src\github.com-1ecc6299db9ec823\gfx_device_gl-0.15.5\src\tex.rs
+
+C:\Users\m-p-b\.cargo\registry\src\github.com-1ecc6299db9ec823\gfx_device_gl-0.15.5\src\lib.rs:
+C:\Users\m-p-b\.cargo\registry\src\github.com-1ecc6299db9ec823\gfx_device_gl-0.15.5\src\command.rs:
+C:\Users\m-p-b\.cargo\registry\src\github.com-1ecc6299db9ec823\gfx_device_gl-0.15.5\src\factory.rs:
+C:\Users\m-p-b\.cargo\registry\src\github.com-1ecc6299db9ec823\gfx_device_gl-0.15.5\src\info.rs:
+C:\Users\m-p-b\.cargo\registry\src\github.com-1ecc6299db9ec823\gfx_device_gl-0.15.5\src\shade.rs:
+C:\Users\m-p-b\.cargo\registry\src\github.com-1ecc6299db9ec823\gfx_device_gl-0.15.5\src\state.rs:
+C:\Users\m-p-b\.cargo\registry\src\github.com-1ecc6299db9ec823\gfx_device_gl-0.15.5\src\tex.rs:
