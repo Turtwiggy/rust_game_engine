@@ -33,9 +33,17 @@ fn main() {
     // render loop
     // -----------
     while !window.should_close() {
-        // events
-        // -----
+        // input events
+        // ------------
         process_events(&mut window, &events);
+
+        // rendering commands here
+        // -----------------------
+        unsafe 
+        {
+            gl::ClearColor(0.3, 0.3, 0.3, 1.0);
+            gl::Clear(gl::COLOR_BUFFER_BIT);
+        }
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
@@ -47,12 +55,18 @@ fn main() {
 // NOTE: not the same version as in common.rs!
 fn process_events(window: &mut glfw::Window, events: &Receiver<(f64, glfw::WindowEvent)>) {
     for (_, event) in glfw::flush_messages(events) {
-        match event {
+        match event 
+        {
+            //Window resize event
             glfw::WindowEvent::FramebufferSize(width, height) => {
                 // make sure the viewport matches the new window dimensions; note that width and
                 // height will be significantly larger than specified on retina displays.
+                
+                //println!("Window resized to width {} height {}", width, height);
                 unsafe { gl::Viewport(0, 0, width, height) }
             }
+
+            //ESC pressed - quit
             glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => window.set_should_close(true),
             _ => {}
         }
