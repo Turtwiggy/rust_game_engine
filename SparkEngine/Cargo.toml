@@ -1,0 +1,19 @@
+[package]
+name = "sparky_engine"
+version = "0.1.0"
+authors = ["m-p-b <m-p-b@hotmail.co.uk>"]
+license = "MIT"
+
+[[bin]]
+name = "lesson_0"
+path = "src/TinyRenderer/lesson_0.rs"
+
+#[dependencies.glfw]
+#git = "https://github.com/bjz/glfw-rs.git"
+
+#[dependencies.gl]
+#git = "https://github.com/bjz/gl-rs"
+
+[dependencies]
+nalgebra = "0.18"
+image = "0.22.3"

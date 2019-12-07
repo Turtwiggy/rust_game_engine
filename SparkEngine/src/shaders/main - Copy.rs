@@ -1,7 +1,9 @@
 extern crate glfw;
 extern crate gl;
+extern crate imgui;
 
 use self::glfw::{Context, Key, Action};
+
 use std::sync::mpsc::Receiver;
 
 // settings
@@ -25,10 +27,17 @@ fn main() {
     window.make_current();
     window.set_key_polling(true);
     window.set_framebuffer_size_polling(true);
+    window.set_mouse_button_polling(true);
+    window.set_char_polling(true);
 
     // gl: load all OpenGL function pointers
     // -------------------------------------
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
+
+    // ImGUI UI bindings
+    // -----------------
+    let mut imgui = ImGui::init();
+    let mut imgui_glfw = ImguiGLFW::new(&mut imgui);
 
     // render loop
     // -----------
