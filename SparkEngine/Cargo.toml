@@ -15,5 +15,5 @@ path = "src/TinyRenderer/lesson_0.rs"
 #git = "https://github.com/bjz/gl-rs"
 
 [dependencies]
-nalgebra = "0.18"
 image = "0.22.3"
+tobj = "0.1.11"
