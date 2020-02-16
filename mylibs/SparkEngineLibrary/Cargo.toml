@@ -1,13 +1,9 @@
 [package]
-name = "MyLibrary"
+name = "SparkEngineLibrary"
 version = "0.1.0"
-authors = ["Twiggy <turtwiggy@hotmail.co.uk>"]
+authors = ["Twiggy <m-p-b@hotmail.co.uk>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[[bin]]
-name = "lib"
-path = "src/lib.rs"
 
 [dependencies]

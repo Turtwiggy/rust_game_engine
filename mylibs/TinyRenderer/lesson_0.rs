@@ -9,13 +9,19 @@ use image::{ImageBuffer, Rgb, RgbImage};
 use std::convert::TryFrom;
 use std::env;
 use std::mem;
+use std::cell::Cell;
 
-fn main() -> std::io::Result<()> {
+struct Vec2 {
+    x: f32,
+    y: f32,
+}
+
+fn main() {
     let _white = Rgb([255, 255, 255]);
     let _red = Rgb([255, 0, 0]);
 
-    let imagex: u32 = 800;
-    let imagey: u32 = 800;
+    let imagex: u32 = 200;
+    let imagey: u32 = 200 ;
 
     // Construct a new RGB ImageBuffer with the specified width and height.
     let mut imgbuf: RgbImage = ImageBuffer::new(imagex, imagey);
@@ -42,20 +48,67 @@ fn main() -> std::io::Result<()> {
     // draw_line(&mut 20, &mut 13, &mut 40, &mut 80, &mut imgbuf, _red);
     // draw_line(&mut 80, &mut 40, &mut 13, &mut 20, &mut imgbuf, _red);
 
+    //Render model in wireframe
+    draw_object("african_head.obj", imagex, imagey, &mut imgbuf, _white);
+
+    // let mut t0: Vec<Vec2> = Vec::new();
+    // t0.push(Vec2 );
+    // t0.push(Vec2 );
+    // t0.push(Vec2 );
+
+    // let mut t0: [Vec2; 3] = [
+    //     Vec2 { x: 10., y: 70. },
+    //     Vec2 { x: 50., y: 160. },
+    //     Vec2 { x: 70., y: 80. }
+    // ];
+    // let mut t1: [Vec2; 3] = [
+    //     Vec2 { x: 180., y: 50. },
+    //     Vec2 { x: 150., y: 1. },
+    //     Vec2 { x: 70., y: 180. },
+    // ];
+    // let mut t2: [Vec2; 3] = [
+    //     Vec2 { x: 180., y: 150. },
+    //     Vec2 { x: 120., y: 160. },
+    //     Vec2 { x: 130., y: 180. },
+    // ];
+
+    // let (a, b, c) = get_mut_points(&mut t0);
+    // draw_triangle(a, b, c, &mut imgbuf, _red);
+
+    // let (c, d, e) = get_mut_points(&mut t1);
+    // draw_triangle(c, d, e, &mut imgbuf, _white);
+
+    // let (f, g, h) = get_mut_points(&mut t2);
+    // draw_triangle(f, g, h, &mut imgbuf, _white);
+    
+    imgbuf.save_with_format("test.png", image::ImageFormat::PNG);
+}
+
+fn get_mut_points( array : &mut [Vec2] ) -> (&mut Vec2, &mut Vec2, &mut Vec2)
+{    
+    let (a, tail) = array.split_at_mut(1);
+    let (b, c) = tail.split_at_mut(1);
+    println!("{} {} {}", a[0].y, b[0].y, c[0].y);
+    return (&mut a[0], &mut b[0], &mut c[0]);
+}
+
+fn draw_object(
+    name: &str,
+    imagex: u32,
+    imagey: u32,
+    imgbuf: &mut RgbImage,
+    color: image::Rgb<u8>,
+) -> std::io::Result<()> {
     let mut current_dir_path = env::current_dir()?;
     println!("The current directory is {}", current_dir_path.display());
-
     current_dir_path.push("src");
     current_dir_path.push("TinyRenderer");
     current_dir_path.push("obj");
-    current_dir_path.push("african_head.obj");
-    println!("Looking for object at: {}", current_dir_path.display());
+    current_dir_path.push(name);
 
-    //Render model in wireframe
+    println!("Looking for object at: {}", current_dir_path.display());
     let african_head = tobj::load_obj(&current_dir_path);
     let (models, materials) = african_head.unwrap();
-
-    //Get model info
     for (i, m) in models.iter().enumerate() {
         let mesh = &m.mesh;
         println!("model[{}].name = \'{}\'", i, m.name);
@@ -102,21 +155,98 @@ fn main() -> std::io::Result<()> {
                 ];
                 //println!("v0: {} {} v1: {} {}", v0[0], v0[1], v1[0], v1[1]);
 
-                let mut x0: i32 = ((v0[0] + 1.) * (imagex as f32 / 2.)) as i32;
-                let mut y0: i32 = ((v0[1] + 1.) * (imagey as f32 / 2.)) as i32;
-                let mut x1: i32 = ((v1[0] + 1.) * (imagex as f32 / 2.)) as i32;
-                let mut y1: i32 = ((v1[1] + 1.) * (imagex as f32 / 2.)) as i32;
+                let mut p0 : Vec2 = Vec2 {
+                    x: ((v0[0] + 1.) * (imagex as f32 / 2.))
+                    , y: ((v0[1] + 1.) * (imagey as f32 / 2.)) };
 
-                println!("x0: {} {} y0: {} {}", x0, y0, x1, y1);
-                draw_line(&mut x0, &mut y0, &mut x1, &mut y1, &mut imgbuf, _white);
+                let mut p1 : Vec2 = Vec2 {
+                    x: ((v1[0] + 1.) * (imagex as f32 / 2.))
+                    , y: ((v1[1] + 1.) * (imagex as f32 / 2.))};
+            
+                // let (a, b, c) = get_mut_points(&mut t0);
+                // draw_triangle(a, b, c, &mut imgbuf, _red);
+
+                //println!("x0: {} {} y0: {} {}", x0, y0, x1, y1);
+                draw_line_vecs(&mut p0, &mut p1, imgbuf, color);
             }
         }
     }
-
-    imgbuf.save_with_format("test.png", image::ImageFormat::PNG);
-
     Ok(())
 }
+
+fn draw_triangle<'a>(
+    t0: &'a mut Vec2,
+    t1: &'a mut Vec2,
+    t2: &'a mut Vec2,
+    imgbuf: &mut RgbImage,
+    color: image::Rgb<u8>,
+) {
+    draw_line_vecs(t0, t1, imgbuf, color);
+    draw_line_vecs(t1, t2, imgbuf, color);
+    draw_line_vecs(t2, t0, imgbuf, color);
+}
+
+fn draw_line_vecs<'a>(
+    p0: &'a mut Vec2,
+    p1: &'a mut Vec2,
+    imgbuf: &mut RgbImage,
+    color: image::Rgb<u8>,
+) {
+    let x0 = p0.x as i32;
+    let y0 = p0.y as i32;
+    let x1 = p1.x as i32;
+    let y1 = p1.x as i32;
+
+    let mut steep = false;
+    if abs(x0 - x1) < abs(y0 - y1) {
+        mem::swap(&mut p0.x, &mut p0.y);
+        mem::swap(&mut p1.x, &mut p1.y);
+        steep = true;
+    }
+    if p0.x > p1.x{
+        mem::swap(p0, p1);
+    }
+    //println!("{} {}", *y1, *y0);
+
+    for x in x0..( x1 + 1 ) 
+    {
+        let t : f32 = (x as f32 - p0.x) / (p1.x - p0.x);
+        let y : i32 = ((p0.y * (1. - t)) + (p1.y * t)) as i32;
+
+        if steep
+        {
+            let pixel = imgbuf.get_pixel_mut(y as u32, x as u32);
+            let image::Rgb(data) = *pixel;
+            *pixel = color;
+        } else
+        {
+            let pixel = imgbuf.get_pixel_mut(x as u32, y as u32);
+            let image::Rgb(data) = *pixel;
+            *pixel = color;
+        }
+    }
+}
+
+    // for x in *x0..*x1 {
+    //     if y >= 100 || x >= 100 {
+    //         continue;
+    //     }
+
+    //     if steep {
+    //         let pixel = imgbuf.get_pixel_mut(y as u32, x as u32);
+    //         let image::Rgb(data) = *pixel;
+    //         *pixel = color;
+    //     } else {
+    //         let pixel = imgbuf.get_pixel_mut(x as u32, y as u32);
+    //         let image::Rgb(data) = *pixel;
+    //         *pixel = color;
+    //     }
+    //     error2 += derror2;
+    //     if error2 > dx {
+    //         y += if y1 > y0 { 1 } else { -1 };
+    //         error2 -= (dx * 2);
+    //     }
+    // }
 
 //Takes in 0->1 and returns 0->255
 fn percent_to_rgb(percent: f32) -> u8 {
@@ -128,55 +258,4 @@ fn abs(number: i32) -> i32 {
         return number * -1;
     }
     return number;
-}
-
-fn draw_line<'a>(
-    x0: &'a mut i32,
-    y0: &'a mut i32,
-    x1: &'a mut i32,
-    y1: &'a mut i32,
-    imgbuf: &mut RgbImage,
-    color: image::Rgb<u8>,
-) {
-    let mut steep = false;
-    if abs( *x0 - *x1 ) < abs( *y0 - *y1 ) {
-        mem::swap(x0, y0);
-        mem::swap(x1, y1);
-        steep = true;
-    }
-    if x0 > x1 {
-        mem::swap(x0, x1);
-        mem::swap(y0, y1);
-    }
-
-    let dx = *x1 - *x0;
-    let dy = *y1 - *y0;
-    println!("{} {}", *y1, *y0);
-
-    let derror2 = abs(dy as i32) * 2;
-    let mut error2: i32 = 0;
-    let mut y = *y0;
-
-    for x in *x0..*x1 {
-
-        if y == 800 || x == 800
-        {
-            continue;
-        }
-
-        if steep {
-            let pixel = imgbuf.get_pixel_mut(y as u32, x as u32);
-            let image::Rgb(data) = *pixel;
-            *pixel = color;
-        } else {
-            let pixel = imgbuf.get_pixel_mut(x as u32, y as u32);
-            let image::Rgb(data) = *pixel;
-            *pixel = color;
-        }
-        error2 += derror2;
-        if error2 > dx {
-            y += if y1 > y0 { 1 } else { -1 };
-            error2 -= (dx * 2);
-        }
-    }
 }
