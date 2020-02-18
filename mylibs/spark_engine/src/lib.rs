@@ -6,6 +6,8 @@ mod tests {
     }
 }
 
+pub mod engine;
+
 pub mod SparkCore
 {
     pub fn main()

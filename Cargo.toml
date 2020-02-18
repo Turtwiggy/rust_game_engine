@@ -1,5 +1,5 @@
 [package]
-name = "sparky_engine"
+name = "main_project"
 version = "0.1.0"
 authors = ["m-p-b <m-p-b@hotmail.co.uk>"]
 license = "MIT"
@@ -22,7 +22,7 @@ path = "src/main.rs"
 
 [dependencies]
 #internal dependancies
-SparkEngineLibrary = { path = "mylibs/SparkEngineLibrary" }
+spark_engine = { path = "mylibs/spark_engine" }
 #external dependancies
 #imgui = "0.2"
 #imgui-sys = "*"
