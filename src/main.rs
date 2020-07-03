@@ -1,204 +1,147 @@
-extern crate spark_engine;
-//use SparkEngineLibrary::SparkCore;
-
 extern crate gl;
-extern crate glfw;
+extern crate sdl2;
 
-use glfw::{Action, Context, JoystickId, Key};
+pub mod shader;
 
-use spark_engine::engine::shaders::render_gl;
-
+use gl::types::GLint;
 use std::ffi::CString;
 use std::time::Instant;
 
 // settings
-const SCR_WIDTH: u32 = 800;
-const SCR_HEIGHT: u32 = 600;
+const SCR_WIDTH: u32 = 720;
+const SCR_WIDTH_GL: GLint = SCR_WIDTH as GLint;
+const SCR_HEIGHT: u32 = 480;
+const SCR_HEIGHT_GL: GLint = SCR_HEIGHT as GLint;
 
 fn main() {
-    let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
-    glfw.window_hint(glfw::WindowHint::ContextVersion(3, 3));
-    #[cfg(target_os = "windows")]
-    glfw.window_hint(glfw::WindowHint::OpenGlForwardCompat(true));
-    glfw.window_hint(glfw::WindowHint::OpenGlProfile(
-        glfw::OpenGlProfileHint::Core,
-    ));
+    //Window Init
+    let sdl = sdl2::init().unwrap();
+    let video_subsystem = sdl.video().unwrap();
 
-    let (mut window, events) = glfw
-        .create_window(
-            SCR_WIDTH,
-            SCR_HEIGHT,
-            "SparkyEngine",
-            glfw::WindowMode::Windowed,
-        )
-        .expect("Failed to create GLFW window.");
+    let gl_attr = video_subsystem.gl_attr();
+    gl_attr.set_context_profile(sdl2::video::GLProfile::Core);
+    gl_attr.set_context_version(3, 1);
 
-    window.make_current();
-    window.set_key_polling(true);
-    window.set_framebuffer_size_polling(true);
-    window.set_mouse_button_polling(true);
-    window.set_char_polling(true);
-    //window.set_cursor_pos_polling(should_poll: bool)
+    let window = video_subsystem
+        .window("Game", SCR_WIDTH, SCR_HEIGHT)
+        .opengl()
+        .resizable()
+        .build()
+        .unwrap();
 
-    gl::load_with(|symbol| window.get_proc_address(symbol));
+    //OpenGL
+    let _gl_context = window.gl_create_context().unwrap();
+    let _gl =
+        gl::load_with(|s| video_subsystem.gl_get_proc_address(s) as *const std::os::raw::c_void);
 
-    unsafe {
-        gl::ClearColor(0.3, 0.3, 1.0, 1.0);
-        gl::Viewport(0, 0, 800, 600);
-        gl::Enable(gl::BLEND);
-        gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
-        gl::Disable(gl::DEPTH_TEST);
-    }
-
-    let vert_shader = render_gl::Shader::from_vert_source(
+    //A Shader
+    let vert_shader = shader::Shader::from_vert_source(
         &CString::new(include_str!("data/shaders/triangle.vert")).unwrap(),
     )
     .unwrap();
-    let frag_shader = render_gl::Shader::from_frag_source(
+    let frag_shader = shader::Shader::from_frag_source(
         &CString::new(include_str!("data/shaders/triangle.frag")).unwrap(),
     )
     .unwrap();
+    let shader_program = shader::Program::from_shaders(&[vert_shader, frag_shader]).unwrap();
+    shader_program.set_used();
 
-    let shader_program = render_gl::Program::from_shaders(&[vert_shader, frag_shader]).unwrap();
-
+    //A triangle
     let vertices: Vec<f32> = vec![
-        0.5, 0.5, 0.0, // top right
-        0.5, -0.5, 0.0, // bottom right
-        -0.5, -0.5, 0.0, // bottom left
-        -0.5, 0.5, 0.0,
+        // positions      // colors
+        0.5, -0.5, 0.0, 1.0, 0.0, 0.0, // bottom right
+        -0.5, -0.5, 0.0, 0.0, 1.0, 0.0, // bottom left
+        0.0, 0.5, 0.0, 0.0, 0.0, 1.0, // top
     ];
-    let indices: Vec<i32> = vec![0, 1, 3, 1, 2, 3];
 
-    let mut VBO: gl::types::GLuint = 0;
-    let mut VAO: gl::types::GLuint = 0;
-    let mut EBO: gl::types::GLuint = 0;
-
+    //VBO
+    let mut vbo: gl::types::GLuint = 0;
     unsafe {
-        gl::GenVertexArrays(1, &mut VAO);
-        gl::GenBuffers(1, &mut VBO);
-        gl::GenBuffers(1, &mut EBO);
-        gl::BindVertexArray(VAO);
+        gl::GenBuffers(1, &mut vbo);
     }
-
     unsafe {
-        gl::BindBuffer(gl::ARRAY_BUFFER, VBO);
+        gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
         gl::BufferData(
             gl::ARRAY_BUFFER,                                                       // target
             (vertices.len() * std::mem::size_of::<f32>()) as gl::types::GLsizeiptr, // size of data in bytes
             vertices.as_ptr() as *const gl::types::GLvoid, // pointer to data
             gl::STATIC_DRAW,                               // usage
         );
+        gl::BindBuffer(gl::ARRAY_BUFFER, 0);
+    }
+    //VAO
+    let mut vao: gl::types::GLuint = 0;
+    unsafe {
+        gl::GenVertexArrays(1, &mut vao);
+    }
+    unsafe {
+        gl::BindVertexArray(vao);
+        gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
 
-        gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, EBO);
-        gl::BufferData(
-            gl::ELEMENT_ARRAY_BUFFER, // target
-            (indices.len() * std::mem::size_of::<i32>()) as gl::types::GLsizeiptr, // size of data in bytes
-            indices.as_ptr() as *const gl::types::GLvoid, // pointer to data
-            gl::STATIC_DRAW,                              // usage
-        );
-
+        gl::EnableVertexAttribArray(0); // this is "layout (location = 0)" in vertex shader
         gl::VertexAttribPointer(
             0,         // index of the generic vertex attribute ("layout (location = 0)")
             3,         // the number of components per generic vertex attribute
             gl::FLOAT, // data type
             gl::FALSE, // normalized (int-to-float conversion)
-            (3 * std::mem::size_of::<f32>()) as gl::types::GLint, // stride (byte offset between consecutive attributes)
+            (6 * std::mem::size_of::<f32>()) as gl::types::GLint, // stride (byte offset between consecutive attributes)
             std::ptr::null(),                                     // offset of the first component
         );
-        gl::EnableVertexAttribArray(0); // this is "layout (location = 0)" in vertex shader
+        gl::EnableVertexAttribArray(1); // this is "layout (location = 0)" in vertex shader
+        gl::VertexAttribPointer(
+            1,         // index of the generic vertex attribute ("layout (location = 0)")
+            3,         // the number of components per generic vertex attribute
+            gl::FLOAT, // data type
+            gl::FALSE, // normalized (int-to-float conversion)
+            (6 * std::mem::size_of::<f32>()) as gl::types::GLint, // stride (byte offset between consecutive attributes)
+            (3 * std::mem::size_of::<f32>()) as *const gl::types::GLvoid, // offset of the first component
+        );
 
-        gl::BindBuffer(gl::ARRAY_BUFFER, 0); // unbind the buffer
+        gl::BindBuffer(gl::ARRAY_BUFFER, 0);
         gl::BindVertexArray(0);
-        gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
+    }
+
+    //Viewport
+    unsafe {
+        gl::Viewport(0, 0, SCR_WIDTH_GL, SCR_HEIGHT_GL); // set viewport
     }
 
     let mut last_frame: Instant = Instant::now();
-    let mut r: f32 = 0.0;
-    let mut increasing = true;
-    let desired_seconds_for_chanage = 5.0;
-
-    while !window.should_close() {
+    let mut event_pump = sdl.event_pump().unwrap();
+    'main: loop {
         let now = Instant::now();
         let delta = now - last_frame;
         let delta_s = delta.as_secs() as f32 + delta.subsec_nanos() as f32 / 1_000_000_000.0;
         last_frame = now;
 
-        glfw.poll_events();
-        for (_, event) in glfw::flush_messages(&events) {
-            handle_window_event(&mut window, event);
-        }
-
-        let joystick = glfw.get_joystick(JoystickId::Joystick1);
-        println!("Joystick enabled: {0}", joystick.is_present());
-
-        // retrieve some necessary information from glfw
-        let (width, height) = window.get_size();
-        let mouse_pos = {
-            let (x, y) = window.get_cursor_pos();
-            (x as i32, height - (y as i32))
-        };
-        let mouse_btn_state = window.get_mouse_button(glfw::MouseButtonLeft);
-        let mouse_scroll = {
-            // emulate mouse scroll with up and down key
-            if window.get_key(Key::Up) == Action::Press {
-                -1
-            } else if window.get_key(Key::Down) == Action::Press {
-                1
-            } else {
-                0
-            }
-        };
-
-        //Clear GL buffer
-        // clear the screen and set the viewport to the window size
-        unsafe {
-            gl::Clear(gl::COLOR_BUFFER_BIT);
-            gl::Viewport(0, 0, width, height);
-            gl::ClearColor(r, 0.3, 1.0, 1.0);
-        }
-
-        //change colour
-        if increasing {
-            r += delta_s / desired_seconds_for_chanage;
-            if r >= 1.0 {
-                increasing = false;
-            }
-        } else {
-            r -= delta_s / desired_seconds_for_chanage;
-            if r <= 0.0 {
-                r = 0.0;
-                increasing = true;
+        for event in event_pump.poll_iter() {
+            match event {
+                sdl2::event::Event::Quit { .. } => break 'main,
+                _ => {}
             }
         }
 
-        //Draw our triangles
         shader_program.set_used();
+        render(vao);
 
-        unsafe {
-            gl::BindVertexArray(VAO);
-            // gl::DrawArrays(
-            //     gl::TRIANGLES, // mode
-            //     0,             // starting index in the enabled arrays
-            //     6,             // number of indices to be rendered
-            // );
-            gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, std::ptr::null());
-        }
-
-        window.swap_buffers();
+        window.gl_swap_window();
     }
 }
 
-fn handle_window_event(window: &mut glfw::Window, event: glfw::WindowEvent) {
-    match event {
-        //Window resize event
-        glfw::WindowEvent::FramebufferSize(width, height) => {
-            // make sure the viewport matches the new window dimensions; note that width and
-            // height will be significantly larger than specified on retina displays.
-            //println!("Window resized to width {} height {}", width, height);
-            unsafe { gl::Viewport(0, 0, width, height) }
-        }
+fn render(vao: gl::types::GLuint) {
+    // render window contents here
+    unsafe {
+        gl::ClearColor(0.2, 1.0, 0.3, 1.0);
+        gl::Clear(gl::COLOR_BUFFER_BIT);
+        // gl::Enable(gl::BLEND);
+        // gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
+        // gl::Disable(gl::DEPTH_TEST);
 
-        glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => window.set_should_close(true),
-        _ => {}
+        gl::BindVertexArray(vao);
+        gl::DrawArrays(
+            gl::TRIANGLES, // mode
+            0,             // starting index in the enabled arrays
+            3,             // number of indices to be rendered
+        );
     }
 }
