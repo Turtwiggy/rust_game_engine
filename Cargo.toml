@@ -13,4 +13,7 @@ version = "0.34.2"
 features = ["bundled", "static-link"]
 
 [dependencies]
-gl = "*"
+gl = "0.10.0"
+imgui = "0.4.0"
+imgui-sdl2 = "0.11.0"
+imgui-opengl-renderer = "0.8"
