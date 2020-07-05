@@ -3,42 +3,27 @@ extern crate gl;
 pub mod buffer;
 pub mod shader;
 
-// #[derive(VertexAttribPointers, Copy, Clone, Debug)]
-// #[repr(C, packed)]
-// struct Vertex {
-//     #[location = "0"]
-//     pos: data::f32_f32_f32,
-//     #[location = "1"]
-//     clr: data::u2_u10_u10_u10_rev_float,
-// }
-
+use resources::Resources;
 use gl::types::GLint;
 use std::ffi::CString;
 
-pub fn create_renderer(gl: &gl::Gl) -> Renderer {
-    //A Shader
-    use std::ffi::CString;
-    let vert_shader = shader::Shader::from_vert_source(
-        &gl,
-        &CString::new(include_str!("data/shaders/triangle.vert")).unwrap(),
-    )
-    .unwrap();
-
-    let frag_shader = shader::Shader::from_frag_source(
-        &gl,
-        &CString::new(include_str!("data/shaders/triangle.frag")).unwrap(),
-    )
-    .unwrap();
-
-    let shader_program = shader::Program::from_shaders(&gl, &[vert_shader, frag_shader]).unwrap();
+pub fn create_renderer(gl: &gl::Gl, res: &Resources) -> Renderer {
+    
+    let shader_program = shader::Program::from_res(&gl, &res, "shaders/triangle").unwrap();
 
     //A square
     let vertices: Vec<f32> = vec![
         // positions
-        0.5, 0.5, 0.0, 0.5, -0.5, 0.0, -0.5, -0.5, 0.0, -0.5, 0.5, 0.0,
+        0.5, 0.5, 0.0, 
+        0.5, -0.5, 0.0,
+        -0.5, -0.5, 0.0, 
+        -0.5, 0.5, 0.0,
     ];
 
-    let indices: Vec<u32> = vec![0, 1, 3, 1, 2, 3];
+    let indices: Vec<u32> = vec![
+        0, 1, 3, 
+        1, 2, 3
+    ];
 
     //VBO
     let mut vbo: u32 = 0;

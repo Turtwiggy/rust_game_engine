@@ -8,9 +8,13 @@ pub mod game_window;
 use game_window::GameWindow;
 pub mod renderer;
 use renderer::Renderer;
+pub mod resources;
 
 use imgui::*;
 use std::time::Instant;
+
+use crate::resources::Resources;
+use std::path::Path;
 
 //Game Settings
 const TARGET_FPS: u32 = 60;
@@ -70,11 +74,12 @@ fn handle_events(
 }
 
 fn main() {
+    let res = Resources::from_relative_exe_path(Path::new("assets")).unwrap();
 
     let game_name: String = "Fighting Game".to_string();
     let mut game_window = game_window::create_game_window(&game_name, 720, 480);
 
-    let mut renderer = renderer::create_renderer(&game_window.gl);
+    let renderer = renderer::create_renderer(&game_window.gl, &res);
 
     let mut event_pump = game_window.sdl_context.event_pump().unwrap();
     let mut last_frame = Instant::now();
