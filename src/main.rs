@@ -8,9 +8,8 @@ pub mod game_window;
 use game_window::GameWindow;
 pub mod renderer;
 use renderer::Renderer;
-pub mod shader;
 
-use gl::types::GLint;
+use imgui::*;
 use std::time::Instant;
 
 //Game Settings
@@ -56,8 +55,14 @@ fn handle_events(
 
                 let (width, height) = game_window.get_width_and_height();
                 println!("width: {0} height: {1}", width, height);
-                renderer.set_viewport(width, height);
+                renderer.set_viewport(&game_window.gl, width as i32, height as i32);
             }
+            sdl2::event::Event::Window {
+                win_event: sdl2::event::WindowEvent::Resized(w, h),
+                ..
+            } => {
+                renderer.set_viewport(&game_window.gl, w, h);
+            },
             _ => {}
         }
     }
@@ -65,10 +70,11 @@ fn handle_events(
 }
 
 fn main() {
+
     let game_name: String = "Fighting Game".to_string();
     let mut game_window = game_window::create_game_window(&game_name, 720, 480);
 
-    let renderer = renderer::create_renderer();
+    let mut renderer = renderer::create_renderer(&game_window.gl);
 
     let mut event_pump = game_window.sdl_context.event_pump().unwrap();
     let mut last_frame = Instant::now();
@@ -77,11 +83,23 @@ fn main() {
         let ok : bool = handle_events(&mut event_pump, &mut game_window, &renderer);
         if !ok { break 'running; }
 
+        let position = game_window.sdl_window.position();
+        let size = game_window.sdl_window.size();
+        println!("size x: {0}, y: {1}", size.0, size.1);
+        renderer.set_viewport(&game_window.gl, size.0 as i32, size.1 as i32);
+
         game_window.imgui_sdl2.prepare_frame(
             game_window.imgui.io_mut(),
             &game_window.sdl_window,
             &event_pump.mouse_state(),
         );
+
+        // // get a mouse state using mouse_state() so as not to call
+        // // relative_mouse_state() twice and get a false position reading
+        // if events.mouse_state().is_mouse_button_pressed(MouseButton::Left) {
+        //     state = events.relative_mouse_state();
+        //     println!("Relative - X = {:?}, Y = {:?}", state.x(), state.y());
+        // }
 
         let now = Instant::now();
         let delta = now - last_frame;
@@ -92,12 +110,30 @@ fn main() {
         let ui = game_window.imgui.frame();
         ui.show_demo_window(&mut true);
 
-        renderer.render();
+        //Seperate Window
+        Window::new(im_str!("Hello world"))
+        .size([300.0, 110.0], Condition::FirstUseEver)
+        .build(&ui, || {
+            ui.text(im_str!("Hello world!"));
+            ui.text(im_str!("こんにちは世界！"));
+            ui.text(im_str!("This...is...imgui-rs!"));
+            ui.separator();
+            let mouse_pos = ui.io().mouse_pos;
+            ui.text(format!(
+                "Mouse Position: ({:.1},{:.1})",
+                mouse_pos[0], mouse_pos[1]
+            ));
+        });
 
+        //Graphics
+        renderer.render(&game_window.gl);
+
+        //UI
         game_window
             .imgui_sdl2
             .prepare_render(&ui, &game_window.sdl_window);
         game_window.renderer.render(ui);
+        
         game_window.sdl_window.gl_swap_window();
         ::std::thread::sleep(::std::time::Duration::new(0, 1_000_000_000u32 / TARGET_FPS));
     }

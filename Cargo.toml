@@ -13,7 +13,10 @@ version = "0.34.2"
 features = ["bundled", "static-link"]
 
 [dependencies]
-gl = "0.10.0"
+gl = { path = "lib/gl" }
 imgui = "0.4.0"
 imgui-sdl2 = "0.11.0"
 imgui-opengl-renderer = "0.8"
+
+[features]
+gl_debug = ["gl/debug"]

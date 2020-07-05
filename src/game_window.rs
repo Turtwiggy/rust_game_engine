@@ -30,7 +30,10 @@ pub fn create_game_window(n: &str, w: u32, h: u32) -> GameWindow {
     let _gl_context = _window
         .gl_create_context()
         .expect("Couldn't create GL context");
-    gl::load_with(|s| _video.gl_get_proc_address(s) as _);
+        
+    let _gl = gl::Gl::load_with(|s| {
+        _video.gl_get_proc_address(s) as *const std::os::raw::c_void
+    });
 
     let mut _imgui = imgui::Context::create();
     _imgui.set_ini_filename(None);
@@ -47,6 +50,7 @@ pub fn create_game_window(n: &str, w: u32, h: u32) -> GameWindow {
 
         sdl_context: _sdl_context,
         gl_context: _gl_context,
+        gl : _gl,
         sdl_window: _window,
         imgui: _imgui,
         imgui_sdl2: _imgui_sdl2,
@@ -63,6 +67,7 @@ pub struct GameWindow {
     pub sdl_context: sdl2::Sdl,
     pub sdl_window: sdl2::video::Window,
     pub gl_context: sdl2::video::GLContext,
+    pub gl : gl::Gl,
     pub imgui: imgui::Context,
     pub imgui_sdl2: imgui_sdl2::ImguiSdl2,
     pub renderer: imgui_opengl_renderer::Renderer,
