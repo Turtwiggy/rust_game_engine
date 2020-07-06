@@ -2,93 +2,63 @@ extern crate gl;
 
 pub mod buffer;
 pub mod shader;
+pub mod data;
 
+use render_gl_derive::*;
 use resources::Resources;
-use gl::types::GLint;
-use std::ffi::CString;
+
+#[derive(VertexAttribPointers, Copy, Clone, Debug)]
+#[repr(C, packed)]
+struct Vertex {
+    #[location = "0"]
+    pos: data::f32_f32_f32,
+    #[location = "1"]
+    clr: data::u2_u10_u10_u10_rev_float,
+}
 
 pub fn create_renderer(gl: &gl::Gl, res: &Resources) -> Renderer {
     
     let shader_program = shader::Program::from_res(&gl, &res, "shaders/triangle").unwrap();
 
-    //A square
-    let vertices: Vec<f32> = vec![
-        // positions
-        0.5, 0.5, 0.0, 
-        0.5, -0.5, 0.0,
-        -0.5, -0.5, 0.0, 
-        -0.5, 0.5, 0.0,
+    let vertices: Vec<Vertex> = vec![
+        Vertex {
+            pos: (0.5, -0.5, 0.0).into(),
+            clr: (1.0, 0.0, 0.0, 1.0).into(),
+        }, // bottom right
+        Vertex {
+            pos: (-0.5, -0.5, 0.0).into(),
+            clr: (0.0, 1.0, 0.0, 1.0).into(),
+        }, // bottom left
+        Vertex {
+            pos: (0.0, 0.5, 0.0).into(),
+            clr: (0.0, 0.0, 1.0, 1.0).into(),
+        }, // top
     ];
 
-    let indices: Vec<u32> = vec![
-        0, 1, 3, 
-        1, 2, 3
-    ];
+    let vbo = buffer::ArrayBuffer::new(gl);
+    vbo.bind();
+    vbo.static_draw_data(&vertices);
+    vbo.unbind();
 
-    //VBO
-    let mut vbo: u32 = 0;
-    unsafe {
-        gl.GenBuffers(1, &mut vbo);
-    }
-    unsafe {
-        gl.BindBuffer(gl::ARRAY_BUFFER, vbo);
-        gl.BufferData(
-            gl::ARRAY_BUFFER,                                                       // target
-            (vertices.len() * std::mem::size_of::<f32>()) as gl::types::GLsizeiptr, // size of data in bytes
-            vertices.as_ptr() as *const gl::types::GLvoid, // pointer to data
-            gl::STATIC_DRAW,                               // usage
-        );
-        gl.BindBuffer(gl::ARRAY_BUFFER, 0);
-    }
-    //EBO
-    let mut ebo: u32 = 0;
-    unsafe {
-        gl.GenBuffers(1, &mut ebo);
-    }
-    unsafe {
-        gl.BindBuffer(gl::ELEMENT_ARRAY_BUFFER, ebo);
-        gl.BufferData(
-            gl::ELEMENT_ARRAY_BUFFER, // target
-            (indices.len() * std::mem::size_of::<u32>()) as gl::types::GLsizeiptr, // size of data in bytes
-            indices.as_ptr() as *const gl::types::GLvoid, // pointer to data
-            gl::STATIC_DRAW,                              // usage
-        );
-        gl.BindBuffer(gl::ARRAY_BUFFER, 0);
-    }
-    //VAO
-    let mut vao: u32 = 0;
-    unsafe {
-        gl.GenVertexArrays(1, &mut vao);
-    }
-    unsafe {
-        gl.BindVertexArray(vao);
-        gl.BindBuffer(gl::ARRAY_BUFFER, vbo);
-        gl.EnableVertexAttribArray(0); // this is "layout (location = 0)" in vertex shader
-        gl.VertexAttribPointer(
-            0,         // index of the generic vertex attribute ("layout (location = 0)")
-            3,         // the number of components per generic vertex attribute
-            gl::FLOAT, // data type
-            gl::FALSE, // normalized (int-to-float conversion)
-            (3 * std::mem::size_of::<f32>()) as gl::types::GLint, // stride (byte offset between consecutive attributes)
-            std::ptr::null(),                                     // offset of the first component
-        );
-        gl.BindBuffer(gl::ARRAY_BUFFER, 0);
-        gl.BindVertexArray(0);
-    }
+    // set up vertex array object
+    let vao = buffer::VertexArray::new(gl);
+    vao.bind();
+    vbo.bind();
+    Vertex::vertex_attrib_pointers(gl);
+    vbo.unbind();
+    vao.unbind();
 
     return Renderer {
         shader_program: shader_program,
         vbo: vbo,
-        ebo: ebo,
         vao: vao,
     };
 }
 
 pub struct Renderer {
     shader_program: shader::Program,
-    vbo: gl::types::GLuint,
-    ebo: gl::types::GLuint,
-    vao: gl::types::GLuint,
+    vbo: buffer::ArrayBuffer,
+    vao: buffer::VertexArray
 }
 
 impl Renderer {
@@ -103,8 +73,8 @@ impl Renderer {
         // gl::Disable(gl::DEPTH_TEST);
 
         self.shader_program.set_used();
+        self.vao.bind();
         unsafe {
-            gl.BindVertexArray(self.vao);
             gl.DrawArrays(
                 gl::TRIANGLES, // mode
                 0,             // starting index in the enabled arrays

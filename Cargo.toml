@@ -14,12 +14,18 @@ features = ["bundled", "static-link"]
 
 [dependencies]
 gl = { path = "lib/gl" }
+render_gl_derive = {path = "lib/render_gl_derive"}
 imgui = "0.4.0"
 imgui-sdl2 = "0.11.0"
 imgui-opengl-renderer = "0.8"
+failure = "*"
+vec-2-10-10-10 = "0.1.2"
+half = "1.1.1"
+nalgebra = "0.18"
+
+[build-dependencies]
+walkdir = "2.1"
 
 [features]
 gl_debug = ["gl/debug"]
 
-[build-dependencies]
-walkdir = "2.1"

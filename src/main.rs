@@ -3,6 +3,13 @@ extern crate imgui;
 extern crate imgui_opengl_renderer;
 extern crate imgui_sdl2;
 extern crate sdl2;
+extern crate half; 
+extern crate nalgebra;
+extern crate vec_2_10_10_10;
+#[macro_use] 
+extern crate failure;
+#[macro_use]
+extern crate render_gl_derive;
 
 pub mod game_window;
 use game_window::GameWindow;
