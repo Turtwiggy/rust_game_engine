@@ -1,9 +1,3 @@
-extern crate gl;
-extern crate imgui;
-extern crate imgui_opengl_renderer;
-extern crate imgui_sdl2;
-extern crate sdl2;
-
 use sdl2::video::FullscreenType;
 
 pub fn create_game_window(n: &str, w: u32, h: u32) -> GameWindow {
@@ -54,7 +48,7 @@ pub fn create_game_window(n: &str, w: u32, h: u32) -> GameWindow {
         sdl_window: _window,
         imgui: _imgui,
         imgui_sdl2: _imgui_sdl2,
-        renderer: _renderer,
+        imgui_renderer: _renderer,
     };
 }
 
@@ -70,7 +64,7 @@ pub struct GameWindow {
     pub gl : gl::Gl,
     pub imgui: imgui::Context,
     pub imgui_sdl2: imgui_sdl2::ImguiSdl2,
-    pub renderer: imgui_opengl_renderer::Renderer,
+    pub imgui_renderer: imgui_opengl_renderer::Renderer,
 }
 
 impl GameWindow {
