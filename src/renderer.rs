@@ -3,13 +3,6 @@ extern crate gl;
 use renderer_gl::*;
 use threed::camera::*;
 use resources::Resources;
-use std::sync::mpsc::Receiver;
-use std::ptr;
-use std::mem;
-use std::os::raw::c_void;
-use std::path::Path;
-use std::ffi::CStr;
-use std::ffi::CString;
 
 use cgmath::prelude::*;
 use cgmath::{Matrix4, Vector3, vec3,  Deg, Rad, perspective};
@@ -75,19 +68,6 @@ pub fn create_renderer(gl: &gl::Gl, res: &Resources) -> Renderer {
         FGVertex{ pos: ( -0.5,  0.5, -0.5).into(), tex: ( 0.0, 1.0,).into()},
     ];
 
-    // world space positions of our cubes
-    let cubePositions: [Vector3<f32>; 10] = [   vec3(0.0, 0.0, 0.0),
-                                                vec3(2.0, 5.0, -15.0),
-                                                vec3(-1.5, -2.2, -2.5),
-                                                vec3(-3.8, -2.0, -12.3),
-                                                vec3(2.4, -0.4, -3.5),
-                                                vec3(-1.7, 3.0, -7.5),
-                                                vec3(1.3, -2.0, -2.5),
-                                                vec3(1.5, 2.0, -2.5),
-                                                vec3(1.5, 0.2, -1.5),
-                                                vec3(-1.3, 1.0, -1.5)];
-
-    
     let vbo = buffer::ArrayBuffer::new(gl);
     vbo.bind();
     vbo.static_draw_data(&CUBE_VERTICES);
@@ -105,7 +85,6 @@ pub fn create_renderer(gl: &gl::Gl, res: &Resources) -> Renderer {
         shader_program: shader_program,
         vbo: vbo,
         vao: vao,
-        cube_positions : cubePositions,
     };
 }
 
@@ -113,7 +92,6 @@ pub struct Renderer {
     shader_program: shader::Program,
     vbo: buffer::ArrayBuffer,
     vao: buffer::VertexArray,
-    cube_positions : [Vector3<f32>; 10],
 }
 
 impl Renderer {
@@ -123,7 +101,8 @@ impl Renderer {
         // camera: 
         width : i32, 
         height : i32,
-        camera: &Camera) 
+        camera: &Camera,
+        cube_positions : &[Vector3<f32>; 10]) 
     {
         
         unsafe {
@@ -153,7 +132,7 @@ impl Renderer {
             self.shader_program.set_mat4(c_str!("projection"), &projection);
 
             self.vao.bind();
-            for (i, position) in self.cube_positions.iter().enumerate() {
+            for (i, position) in cube_positions.iter().enumerate() {
                 // calculate the model matrix for each object and pass it to shader before drawing
                 let mut model: Matrix4<f32> = Matrix4::from_translation(*position);
                 let angle = 20.0 * i as f32;

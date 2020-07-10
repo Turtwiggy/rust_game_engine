@@ -24,6 +24,7 @@ half = "1.1.1"
 nalgebra = "0.18"
 cgmath = "*"
 c_string = "*"
+rand = "*"
 #wavefront_obj = "8.0.0"
 #image = "*"
 

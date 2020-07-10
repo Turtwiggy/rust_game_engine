@@ -6,9 +6,9 @@ use cgmath;
 use cgmath::vec3;
 use cgmath::prelude::*;
 
-pub type Point3 = cgmath::Point3<f32>;
-pub type Vector3 = cgmath::Vector3<f32>;
-pub type Matrix4 = cgmath::Matrix4<f32>;
+type Point3 = cgmath::Point3<f32>;
+type Vector3 = cgmath::Vector3<f32>;
+type Matrix4 = cgmath::Matrix4<f32>;
 
 // Defines several possible options for camera movement. Used as abstraction to stay away from window-system specific input methods
 #[derive(PartialEq, Clone, Copy)]
@@ -57,6 +57,11 @@ impl Default for Camera {
             MouseSensitivity: SENSITIVTY,
             Zoom: ZOOM,
         };
+
+        // let mut firstMouse = true;
+        // let mut lastX: f32 = init_width as f32 / 2.0;
+        // let mut lastY: f32 = init_height as f32 / 2.0;
+
         camera.updateCameraVectors();
         camera
     }
