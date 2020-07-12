@@ -139,10 +139,10 @@ impl Camera {
         }
     }
 
-    pub fn Update(&mut self, delta_time : f32) 
+    pub fn Update(&mut self, delta_time : f64) 
     {
         let state = self.state;
-        let velocity = self.MovementSpeed * delta_time;
+        let velocity = self.MovementSpeed * delta_time as f32;
 
         if state.fwd_pressed {
             self.Position += self.Front * velocity;

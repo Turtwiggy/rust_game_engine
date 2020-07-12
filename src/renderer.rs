@@ -95,6 +95,9 @@ pub fn create_renderer(gl: &gl::Gl, res: &Resources) -> Renderer {
     // ----------------
     unsafe {
         gl.Enable(gl::DEPTH_TEST);
+        // gl::Enable(gl::BLEND);
+        // gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
+        // gl::Disable(gl::DEPTH_TEST);
     }
 
     return Renderer {
@@ -116,9 +119,7 @@ impl Renderer {
     pub fn render(
         &self, 
         gl: &gl::Gl, 
-        // camera: 
-        width : i32, 
-        height : i32,
+        window_size : (u32, u32),
         camera: &Camera,
         game_state: &GameState ) 
     {
@@ -127,9 +128,6 @@ impl Renderer {
             gl.ClearColor(0.2, 0.3, 0.3, 1.0);
             gl.Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         }
-        // gl::Enable(gl::BLEND);
-        // gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
-        // gl::Disable(gl::DEPTH_TEST);
 
         // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
         self.lit_shader.set_used();
@@ -159,7 +157,7 @@ impl Renderer {
 
         //View Projection 
         let view = camera.GetViewMatrix();
-        let projection: Matrix4<f32> = perspective(Deg(camera.Zoom), width as f32 / height as f32 , 0.1, 100.0);
+        let projection: Matrix4<f32> = perspective(Deg(camera.Zoom), window_size.0 as f32 / window_size.1 as f32 , 0.1, 100.0);
         self.lit_shader.set_mat4(c_str!("view"), &view);
         self.lit_shader.set_mat4(c_str!("projection"), &projection);
 
@@ -171,28 +169,20 @@ impl Renderer {
         // );
         let mut model = Matrix4::<f32>::identity();
         self.lit_shader.set_mat4(c_str!("model"), &model);
-
         self.vao.bind();
 
-        //render a cube
-        unsafe {
-            gl.DrawArrays(gl::TRIANGLES, 0, 36);
+        //render cubes
+        for (i, position) in game_state.game_objects.iter().enumerate() {
+            // calculate the model matrix for each object and pass it to shader before drawing
+            let mut model: Matrix4<f32> = Matrix4::from_translation(*position);
+            // let angle = 20.0 * i as f32;
+            // model = model * Matrix4::from_axis_angle(vec3(1.0, 0.3, 0.5).normalize(), Deg(angle));
+            self.lit_shader.set_mat4(c_str!("model"), &model);
+
+            unsafe {
+                gl.DrawArrays(gl::TRIANGLES, 0, 36);
+            }
         }
-
-        // for (i, position) in game_state.game_objects.iter().enumerate() {
-        //     // calculate the model matrix for each object and pass it to shader before drawing
-        //     let mut model: Matrix4<f32> = Matrix4::from_translation(*position);
-        //     let angle = 20.0 * i as f32;
-        //     model = model * Matrix4::from_axis_angle(vec3(1.0, 0.3, 0.5).normalize(), Deg(angle));
-        //     self.lit_shader.set_mat4(c_str!("model"), &model);
-
-        //     unsafe {
-        //         gl.DrawArrays(gl::TRIANGLES, 0, 36);
-        //     }
-
-        //     //only render 1 cube for now
-        //     break;
-        // }
 
         //Also draw lamp object
         self.flat_shader.set_used();
@@ -202,7 +192,6 @@ impl Renderer {
         model = Matrix4::from_translation(game_state.light_objects[0]);
         model = model * Matrix4::from_scale(0.2);  // a smaller cube
         self.flat_shader.set_mat4(c_str!("model"), &model);
-
         unsafe {
             gl.DrawArrays(gl::TRIANGLES, 0, 36);
         }
