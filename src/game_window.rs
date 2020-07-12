@@ -104,6 +104,16 @@ impl GameWindow {
         self.sdl_window.set_icon(icon);
     }
 
+    // pub fn get_monitor_refresh_rate(&self, display: i32) -> f32 {
+    //     let display_mode = self.sdl_window.display_mode().unwrap();
+
+    //     display_mode.refresh_rate();
+    // }
+
+    pub fn get_current_display_mode(&self) -> sdl2::video::DisplayMode {
+        return self.sdl_window.display_mode().unwrap();
+    }
+
     /* MOUSE */
 
     pub fn set_relative_mouse_mode(&self, on: bool) {

@@ -1,7 +1,12 @@
 use game_window::GameWindow;
 use imgui::*;
+use util::profiling::ProfileInformation;
 
-pub fn ui(game_window: &mut GameWindow, timer : f64, fps : f64) {
+pub fn ui(
+    game_window: &mut GameWindow, 
+    timer : f64, 
+    fps : f32, 
+    profie_info : &ProfileInformation ) {
     let ui = game_window.imgui.frame();
     //ui.show_demo_window(&mut true);
 
@@ -10,14 +15,41 @@ pub fn ui(game_window: &mut GameWindow, timer : f64, fps : f64) {
         .size([300.0, 110.0], Condition::FirstUseEver)
         .build(&ui, || {
             ui.text(im_str!("Hello world!"));
-            ui.text(im_str!("こんにちは世界！"));
-            ui.text(im_str!("This...is...imgui-rs!"));
+
             ui.text(format!(
                 "Timer: {:.1}", timer
             ));
             ui.text(format!(
-                "FPS: {:.1}", fps
+                "FPS: {}", fps
             ));
+            ui.separator();
+
+            ui.text(im_str!("Previous Frame Information"));
+            ui.text(format!(
+                "Frame Start: {}", profie_info.frame_start
+            ));
+            ui.text(format!(
+                "Events: {}", profie_info.events
+            ));
+            ui.text(format!(
+                "Camera Update: {}", profie_info.camera_update
+            ));
+            ui.text(format!(
+                "Gamestate Update: {}", profie_info.gamestate_update
+            ));
+            ui.text(format!(
+                "Renderer Update: {}", profie_info.renderer_update
+            ));
+            ui.text(format!(
+                "Gui Update: {}", profie_info.gui_update
+            ));
+            ui.text(format!(
+                "Frame End: {}", profie_info.frame_end
+            ));
+            ui.text(format!(
+                "Total Loop: {}", profie_info.full_loop
+            ));
+        
             ui.separator();
             let mouse_pos = ui.io().mouse_pos;
             ui.text(format!(

@@ -27,6 +27,8 @@ pub mod threed;
 use threed::camera::{Camera, CameraMovement};
 pub mod game;
 use game::GameState;
+pub mod util;
+use util::profiling::ProfileInformation;
 pub mod gui;
 
 use cgmath::{vec3, Point3, Vector3};
@@ -38,9 +40,8 @@ use std::path::Path;
 use std::time::Instant;
 
 //Game Settings
-const TARGET_FPS: u32 = 144;
-const GAME_TICKS_PER_SECOND: u32 = 2;
-const SECONDS_PER_GAMETICK: f64 = 1.0 / GAME_TICKS_PER_SECOND as f64;
+// const GAME_TICKS_PER_SECOND: u32 = 2;
+// const SECONDS_PER_GAMETICK: f64 = 1.0 / GAME_TICKS_PER_SECOND as f64;
 
 fn process_events(
     game_window: &mut GameWindow,
@@ -192,11 +193,10 @@ fn match_camera_event(camera : &mut Camera, event: &sdl2::event::Event) {
     }
 }
 
-
 fn tick(delta_time: f64, game_state: &mut GameState, timer_seconds: &f64) {
     let mut rng = rand::thread_rng();
 
-    println!("ticking game state");
+    //println!("ticking game state");
 
     //Shuffle all cube positions!
     for (i, cube_pos) in game_state.game_objects.iter_mut().enumerate() {
@@ -208,7 +208,7 @@ fn tick(delta_time: f64, game_state: &mut GameState, timer_seconds: &f64) {
     }
 
     //Make light source move around
-    println!("timer_seconds value: {0}", timer_seconds);
+    //println!("timer_seconds value: {0}", timer_seconds);
     let mut light_pos = game_state.light_objects[0];
     let new_x = 2.0 * timer_seconds.sin();
     let new_y = -0.3;
@@ -231,6 +231,12 @@ fn main() {
     let mut viewport = renderer_gl::Viewport::for_window(init_width as i32, init_height as i32);
     let renderer = renderer::create_renderer(&game_window.gl, &res);
 
+    // Initial Settings
+    // ----------------
+    let current_display = game_window.get_current_display_mode();
+    let target_fps : f64 = current_display.refresh_rate as f64;
+    println!("Target FPS set to: {0}", target_fps);
+
     // Game Objects
     // ------------
     let light_positions: [Vector3<f32>; 1] = [vec3(1.0, 1.0, 1.0)];
@@ -248,8 +254,8 @@ fn main() {
         vec3(-1.3, 1.0, -1.5),
     ];
 
-    // Game State
-    // ----------
+    // Initial Game State
+    // ------------------
     let mut camera = Camera {
         Position: Point3::new(0.0, 0.0, 3.0),
         ..Camera::default()
@@ -259,16 +265,28 @@ fn main() {
         light_objects: light_positions,
     };
     println!("gamestate bytes: {0}", std::mem::size_of::<GameState>());
-    let mut state_previous: GameState = state_current.clone();
 
+    // FPS Info & Profiling
+    // --------
+    const fps_buffer_length : usize = 50;
+    let mut fps_buffer : [f32; fps_buffer_length] = [0.0;fps_buffer_length];
+    let mut fps_buffer_idx = 0;
+    let mut timer_seconds : f64 = 0.0;
+    let mut current_profile_information : ProfileInformation = Default::default();
+    let mut previous_profile_information : ProfileInformation = Default::default();
+
+    // Game Loop
+    // ---------
     let mut event_pump = game_window.sdl_context.event_pump().unwrap();
     let mut last_frame = Instant::now();
-    let mut timer_seconds : f64 = 0.0;
-    let mut seconds_since_last_fixed_tick: f64 = 0.0;
+    //let mut seconds_since_last_fixed_tick: f64 = 0.0;
     'running: loop {
 
         // Events
         // ------
+        let mut time_now = Instant::now();
+        let mut time_continuous = Instant::now();
+        
         for event in event_pump.poll_iter() {
             game_window
                 .imgui_sdl2
@@ -283,11 +301,13 @@ fn main() {
             if !ok {
                 break 'running;
             }
-        }        
+        }   
         // relative_mouse_state() twice and get a false position reading
         let mouse_state = event_pump.relative_mouse_state();
+        current_profile_information.events = time_now.elapsed().as_millis();
 
         //Prepare frame
+        time_now = Instant::now();
         game_window.imgui_sdl2.prepare_frame(
             game_window.imgui.io_mut(),
             &game_window.sdl_window,
@@ -297,29 +317,17 @@ fn main() {
         let delta = now - last_frame;
         let mut delta_s = delta.as_secs() as f64 + delta.subsec_nanos() as f64 / 1_000_000_000.0;
         timer_seconds += delta_s;
-        //Clamp delta_s to avoid spiral of death
-        if delta_s > 0.25
+        if delta_s > 0.25 //Clamp delta_s to avoid spiral of death
         {
             delta_s = 0.25;
         }
         last_frame = now;
-        seconds_since_last_fixed_tick += delta_s;
         game_window.imgui.io_mut().delta_time = delta_s as f32;
-
-        // // Game Logic Tick - X ticks per second
-        // // ------------------------------------
-        // // If you want to do a replay, take snapshots of input and delta times
-        // while seconds_since_last_fixed_tick >= SECONDS_PER_GAMETICK {
-        //     //Copying the entire gamestate every frame...
-        //     //Could probably do this better eventually
-        //     state_previous = state_current.clone();
-        // 
-        //     TICK HERE
-        //     seconds_since_last_fixed_tick -= SECONDS_PER_GAMETICK;
-        // }
+        current_profile_information.frame_start = time_now.elapsed().as_millis();
 
         // Update Camera
         // -------------
+        time_now = Instant::now();
         let invert_mouse : bool = true;
         let mut y : i32 = mouse_state.y();
         if invert_mouse
@@ -328,33 +336,70 @@ fn main() {
         }
         camera.ProcessMouseMovement(mouse_state.x() as f32, y as f32, true);
         camera.Update(delta_s);
+        current_profile_information.camera_update = time_now.elapsed().as_millis();
 
         // Update Game State
         // -----------------
+        time_now = Instant::now();
         tick(delta_s, &mut state_current, &timer_seconds); //this update's state_current
-
-        // Fixed Gamestep Lerp
-        // --------------
-        //Produces a value [0, 1] based on how to  processing another gametick
-        //This i s used to perform a linear interpolation between the two physics states to get the current state to render.
-        //let alpha : f64 = seconds_since_last_fixed_tick / SECONDS_PER_GAMETICK;
-        //println!("alpha: {0}", alpha);
-        //let lerped_gamestate = state_current * alpha + state_previous * (1.0 - alpha);
+        current_profile_information.gamestate_update = time_now.elapsed().as_millis();
 
         // Update Rendering
         // ---------
+        time_now = Instant::now();
         renderer.render(
             &game_window.gl,
             game_window.sdl_window.size(),
             &camera,
             &state_current,
         );
+        current_profile_information.renderer_update = time_now.elapsed().as_millis();
+
+        // Show Profiling 
+        // ---------
+        fps_buffer[fps_buffer_idx] = 1.0 / delta_s as f32;
+        fps_buffer_idx = (fps_buffer_idx + 1) % fps_buffer_length;
+        let fps_buffer_avg = fps_buffer.iter().sum::<f32>() / fps_buffer.len() as f32;
+        //println!("fps avg: {0}", fps_buffer_avg);
 
         // UI
         // --
-        gui::ui(&mut game_window, timer_seconds);
+        time_now = Instant::now();
+        gui::ui(&mut game_window, timer_seconds, fps_buffer_avg, &previous_profile_information);
+        current_profile_information.gui_update = time_now.elapsed().as_millis();
 
+        // End Frame
+        // ---------
+        time_now = Instant::now();
         game_window.sdl_window.gl_swap_window();
-        ::std::thread::sleep(::std::time::Duration::new(0, 1_000_000_000u32 / TARGET_FPS));
+        current_profile_information.frame_end = time_now.elapsed().as_millis();
+
+        // ::std::thread::sleep(::std::time::Duration::new(0, (1000000000 as f64 / target_fps)));
+
+        current_profile_information.full_loop = time_continuous.elapsed().as_millis();
+        previous_profile_information = current_profile_information.clone();
     }
 }
+
+
+// //let mut state_previous: GameState = state_current.clone();
+// // Game Logic Tick - X ticks per second
+// // ------------------------------------
+// // If you want to do a replay, take snapshots of input and delta times
+// seconds_since_last_fixed_tick += delta_s;
+// while seconds_since_last_fixed_tick >= SECONDS_PER_GAMETICK {
+//     //Copying the entire gamestate every frame...
+//     //Could probably do this better eventually
+//     state_previous = state_current.clone();
+// 
+//     TICK HERE
+//     seconds_since_last_fixed_tick -= SECONDS_PER_GAMETICK;
+// }
+
+// // Fixed Gamestep Lerp
+// // --------------
+// //Produces a value [0, 1] based on how to  processing another gametick
+// //This i s used to perform a linear interpolation between the two physics states to get the current state to render.
+//let alpha : f64 = seconds_since_last_fixed_tick / SECONDS_PER_GAMETICK;
+//println!("alpha: {0}", alpha);
+//let lerped_gamestate = state_current * alpha + state_previous * (1.0 - alpha);
