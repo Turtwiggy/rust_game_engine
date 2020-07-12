@@ -11,14 +11,16 @@ type Vector3 = cgmath::Vector3<f32>;
 type Matrix4 = cgmath::Matrix4<f32>;
 
 // Defines several possible options for camera movement. Used as abstraction to stay away from window-system specific input methods
-#[derive(PartialEq, Clone, Copy)]
-pub enum Camera_Movement {
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum CameraMovement {
     FORWARD,
     BACKWARD,
     LEFT,
     RIGHT,
+    UP,
+    DOWN
 }
-use self::Camera_Movement::*;
+use self::CameraMovement::*;
 
 // Default camera values
 const YAW: f32 = -90.0;
@@ -27,6 +29,7 @@ const SPEED: f32 = 2.5;
 const SENSITIVTY: f32 = 0.1;
 const ZOOM: f32 = 45.0;
 
+#[derive(Debug, Clone, Copy)]
 pub struct Camera {
     // Camera Attributes
     pub Position: Point3,
@@ -41,6 +44,17 @@ pub struct Camera {
     pub MovementSpeed: f32,
     pub MouseSensitivity: f32,
     pub Zoom: f32,
+    pub state : CameraState,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct CameraState {
+    fwd_pressed : bool,
+    bwd_pressed : bool,
+    lft_pressed : bool,
+    rgt_pressed : bool,
+    up_pressed : bool,
+    dwn_pressed : bool,
 }
 
 impl Default for Camera {
@@ -56,6 +70,14 @@ impl Default for Camera {
             MovementSpeed: SPEED,
             MouseSensitivity: SENSITIVTY,
             Zoom: ZOOM,
+            state: CameraState {
+                fwd_pressed: false, 
+                bwd_pressed: false, 
+                lft_pressed: false, 
+                rgt_pressed: false,
+                up_pressed: false,
+                dwn_pressed: false,
+            }
         };
 
         // let mut firstMouse = true;
@@ -74,19 +96,75 @@ impl Camera {
     }
 
     /// Processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
-    pub fn ProcessKeyboard(&mut self, direction: Camera_Movement, deltaTime: f32) {
-        let velocity = self.MovementSpeed * deltaTime;
+    pub fn ProcessKeyboardDown(&mut self, direction: CameraMovement) {
         if direction == FORWARD {
-            self.Position += self.Front * velocity;
+            self.state.fwd_pressed = true;
         }
         if direction == BACKWARD {
-            self.Position += -(self.Front * velocity);
+            self.state.bwd_pressed = true;
         }
         if direction == LEFT {
-            self.Position += -(self.Right * velocity);
+            self.state.lft_pressed = true;
         }
         if direction == RIGHT {
+            self.state.rgt_pressed = true;
+        }
+        if direction == UP {
+            self.state.up_pressed = true;
+        }
+        if direction == DOWN {
+            self.state.dwn_pressed = true;
+        }
+    }
+
+    /// Processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
+    pub fn ProcessKeyboardUp(&mut self, direction: CameraMovement) {
+        if direction == FORWARD {
+            self.state.fwd_pressed = false;
+        }
+        if direction == BACKWARD {
+            self.state.bwd_pressed = false;
+        }
+        if direction == LEFT {
+            self.state.lft_pressed = false;
+        }
+        if direction == RIGHT {
+            self.state.rgt_pressed = false;
+        }
+        if direction == UP {
+            self.state.up_pressed = false;
+        }
+        if direction == DOWN {
+            self.state.dwn_pressed = false;
+        }
+    }
+
+    pub fn Update(&mut self, delta_time : f32) 
+    {
+        let state = self.state;
+        let velocity = self.MovementSpeed * delta_time;
+
+        if state.fwd_pressed {
+            self.Position += self.Front * velocity;
+        }
+        else if state.bwd_pressed {
+            self.Position += -(self.Front * velocity);
+        }
+
+        if state.lft_pressed {
+            self.Position += -(self.Right * velocity);
+        }
+        else if state.rgt_pressed {
             self.Position += self.Right * velocity;
+        }
+
+        if state.up_pressed {
+            //self.Position += -(self.Right * velocity);
+            self.Position += self.Up * velocity;
+        }
+        else if state.dwn_pressed {
+            //self.Position += self.Right * velocity;
+            self.Position += -(self.Up * velocity);
         }
     }
 

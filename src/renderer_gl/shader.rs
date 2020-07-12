@@ -111,28 +111,40 @@ impl Program {
 
     /// utility uniform functions
     /// ------------------------------------------------------------------------
-    pub unsafe fn set_bool(&self, name: &CStr, value: bool) {
-        self.gl.Uniform1i(self.gl.GetUniformLocation(self.id, name.as_ptr()), value as i32);
+    pub fn set_bool(&self, name: &CStr, value: bool) {
+        unsafe{
+            self.gl.Uniform1i(self.gl.GetUniformLocation(self.id, name.as_ptr()), value as i32);
+        }
     }
     /// ------------------------------------------------------------------------
-    pub unsafe fn set_int(&self, name: &CStr, value: i32) {
-        self.gl.Uniform1i(self.gl.GetUniformLocation(self.id, name.as_ptr()), value);
+    pub fn set_int(&self, name: &CStr, value: i32) {
+        unsafe{
+            self.gl.Uniform1i(self.gl.GetUniformLocation(self.id, name.as_ptr()), value);
+        }
     }
     /// ------------------------------------------------------------------------
-    pub unsafe fn set_float(&self, name: &CStr, value: f32) {
-        self.gl.Uniform1f(self.gl.GetUniformLocation(self.id, name.as_ptr()), value);
+    pub fn set_float(&self, name: &CStr, value: f32) {
+        unsafe{
+            self.gl.Uniform1f(self.gl.GetUniformLocation(self.id, name.as_ptr()), value);
+        }
     }
     /// ------------------------------------------------------------------------
-    pub unsafe fn set_vector3(&self, name: &CStr, value: &Vector3<f32>) {
-        self.gl.Uniform3fv(self.gl.GetUniformLocation(self.id, name.as_ptr()), 1, value.as_ptr());
+    pub fn set_vector3(&self, name: &CStr, value: &Vector3<f32>) {
+        unsafe{
+            self.gl.Uniform3fv(self.gl.GetUniformLocation(self.id, name.as_ptr()), 1, value.as_ptr());
+        }
     }
     /// ------------------------------------------------------------------------
-    pub unsafe fn set_vec3(&self, name: &CStr, x: f32, y: f32, z: f32) {
-        self.gl.Uniform3f(self.gl.GetUniformLocation(self.id, name.as_ptr()), x, y, z);
+    pub fn set_vec3(&self, name: &CStr, x: f32, y: f32, z: f32) {
+        unsafe{
+            self.gl.Uniform3f(self.gl.GetUniformLocation(self.id, name.as_ptr()), x, y, z);
+        }
     }
     /// ------------------------------------------------------------------------
-    pub unsafe fn set_mat4(&self, name: &CStr, mat: &Matrix4<f32>) {
-        self.gl.UniformMatrix4fv(self.gl.GetUniformLocation(self.id, name.as_ptr()), 1, gl::FALSE, mat.as_ptr());
+    pub fn set_mat4(&self, name: &CStr, mat: &Matrix4<f32>) {
+        unsafe{
+            self.gl.UniformMatrix4fv(self.gl.GetUniformLocation(self.id, name.as_ptr()), 1, gl::FALSE, mat.as_ptr());
+        }
     }
 }
 

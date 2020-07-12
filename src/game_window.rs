@@ -1,3 +1,4 @@
+use sdl2::surface::SurfaceRef;
 use sdl2::video::FullscreenType;
 
 pub fn create_game_window(n: &str, w: u32, h: u32) -> GameWindow {
@@ -37,11 +38,6 @@ pub fn create_game_window(n: &str, w: u32, h: u32) -> GameWindow {
         imgui_opengl_renderer::Renderer::new(&mut _imgui, |s| _video.gl_get_proc_address(s) as _);
 
     return GameWindow {
-        name: n.to_string(),
-        width: w,
-        height: h,
-        is_fullscreen: false,
-
         sdl_context: _sdl_context,
         gl_context: _gl_context,
         gl : _gl,
@@ -53,11 +49,6 @@ pub fn create_game_window(n: &str, w: u32, h: u32) -> GameWindow {
 }
 
 pub struct GameWindow {
-    name: String,
-    width: u32,
-    height: u32,
-    is_fullscreen: bool,
-
     pub sdl_context: sdl2::Sdl,
     pub sdl_window: sdl2::video::Window,
     pub gl_context: sdl2::video::GLContext,
@@ -76,19 +67,11 @@ impl GameWindow {
         return self.sdl_window.position();
     }
 
-    pub fn is_grabbed(&self) -> bool{
-        return self.sdl_window.grab();
-    }
 
-    pub fn set_grabbed(&mut self, grab : bool) {
-        self.sdl_window.set_grab(grab);
-    }
-
-    //pub enum FullscreenType {
-    //     Off = 0,
-    //     True = 0x00_00_00_01,
-    //     Desktop = 0x00_00_10_01,
-    // }
+    /*  pub enum FullscreenType {
+        Off = 0,
+        True = 0x00_00_00_01,
+        Desktop = 0x00_00_10_01 (borderless) } */
     pub fn set_fullscreen(&mut self, fullscreen: bool) {
         if fullscreen {
             let result = self.sdl_window.set_fullscreen(FullscreenType::Desktop);
@@ -105,5 +88,48 @@ impl GameWindow {
             return true;
         }
         return false;
+    }
+    
+    /// Use this function to set the icon for a window.
+    ///
+    /// # Example:
+    /// ```compile_fail
+    /// // requires "--features 'image'"
+    /// use sdl2::surface::Surface;
+    ///
+    /// let window_icon = Surface::from_file("/path/to/icon.png")?;
+    /// window.set_icon(window_icon);
+    /// ```
+    pub fn set_icon<S: AsRef<SurfaceRef>>(&mut self, icon: S) {
+        self.sdl_window.set_icon(icon);
+    }
+
+    /* MOUSE */
+
+    pub fn set_relative_mouse_mode(&self, on: bool) {
+        self.sdl_context.mouse().set_relative_mouse_mode(on);
+    }
+
+    pub fn relative_mouse_mode(&self) -> bool {
+        return self.sdl_context.mouse().relative_mouse_mode();
+    }
+
+    pub fn get_mouse_grabbed(&self) -> bool{
+        return self.sdl_window.grab();
+    }
+
+    pub fn set_mouse_grabbed(&mut self, grab : bool) {
+        self.sdl_window.set_grab(grab);
+    }
+
+    pub fn capture_mouse(&mut self, capture: bool) {
+        return self.sdl_context.mouse().capture(capture);
+    }
+
+    pub fn toggle_grabbed(&mut self)
+    {
+        let grabbed : bool = self.get_mouse_grabbed();
+        self.set_relative_mouse_mode(!grabbed);
+        self.set_mouse_grabbed(!grabbed);
     }
 }

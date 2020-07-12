@@ -3,6 +3,7 @@ extern crate gl;
 use renderer_gl::*;
 use threed::camera::*;
 use resources::Resources;
+use game::{GameState};
 
 use cgmath::prelude::*;
 use cgmath::{Matrix4, Vector3, vec3,  Deg, Rad, perspective};
@@ -13,64 +14,73 @@ struct FGVertex {
     #[location = "0"]
     pos: data::f32_f32_f32,
     #[location = "1"]
-    tex: data::f32_f32,
+    nml: data::f32_f32_f32,
+    // #[location = "1"]
+    // tex: data::f32_f32,
     // #[location = "1"]
     // clr: data::u2_u10_u10_u10_rev_float,
 }
 
+fn get_cube_vertices() -> [FGVertex; 36] {
+    let verts: [FGVertex; 36] = [
+        FGVertex{pos: (-0.5, -0.5, -0.5).into(), nml: ( 0.0,  0.0, -1.0).into()},
+        FGVertex{pos: ( 0.5, -0.5, -0.5).into(), nml: ( 0.0,  0.0, -1.0).into()},
+        FGVertex{pos: ( 0.5,  0.5, -0.5).into(), nml: ( 0.0,  0.0, -1.0).into()},
+        FGVertex{pos: ( 0.5,  0.5, -0.5).into(), nml: ( 0.0,  0.0, -1.0).into()},
+        FGVertex{pos: (-0.5,  0.5, -0.5).into(), nml: ( 0.0,  0.0, -1.0).into()},
+        FGVertex{pos: (-0.5, -0.5, -0.5).into(), nml: ( 0.0,  0.0, -1.0).into()},
+
+        FGVertex{pos: (-0.5, -0.5,  0.5).into(), nml: ( 0.0,  0.0,  1.0).into()},
+        FGVertex{pos: ( 0.5, -0.5,  0.5).into(), nml: ( 0.0,  0.0,  1.0).into()},
+        FGVertex{pos: ( 0.5,  0.5,  0.5).into(), nml: ( 0.0,  0.0,  1.0).into()},
+        FGVertex{pos: ( 0.5,  0.5,  0.5).into(), nml: ( 0.0,  0.0,  1.0).into()},
+        FGVertex{pos: (-0.5,  0.5,  0.5).into(), nml: ( 0.0,  0.0,  1.0).into()},
+        FGVertex{pos: (-0.5, -0.5,  0.5).into(), nml: ( 0.0,  0.0,  1.0).into()},
+
+        FGVertex{pos: (-0.5,  0.5,  0.5).into(), nml: (-1.0,  0.0,  0.0).into()},
+        FGVertex{pos: (-0.5,  0.5, -0.5).into(), nml: (-1.0,  0.0,  0.0).into()},
+        FGVertex{pos: (-0.5, -0.5, -0.5).into(), nml: (-1.0,  0.0,  0.0).into()},
+        FGVertex{pos: (-0.5, -0.5, -0.5).into(), nml: (-1.0,  0.0,  0.0).into()},
+        FGVertex{pos: (-0.5, -0.5,  0.5).into(), nml: (-1.0,  0.0,  0.0).into()},
+        FGVertex{pos: (-0.5,  0.5,  0.5).into(), nml: (-1.0,  0.0,  0.0).into()},
+
+        FGVertex{pos: ( 0.5,  0.5,  0.5).into(), nml: ( 1.0,  0.0,  0.0).into()},
+        FGVertex{pos: ( 0.5,  0.5, -0.5).into(), nml: ( 1.0,  0.0,  0.0).into()},
+        FGVertex{pos: ( 0.5, -0.5, -0.5).into(), nml: ( 1.0,  0.0,  0.0).into()},
+        FGVertex{pos: ( 0.5, -0.5, -0.5).into(), nml: ( 1.0,  0.0,  0.0).into()},
+        FGVertex{pos: ( 0.5, -0.5,  0.5).into(), nml: ( 1.0,  0.0,  0.0).into()},
+        FGVertex{pos: ( 0.5,  0.5,  0.5).into(), nml: ( 1.0,  0.0,  0.0).into()},
+
+        FGVertex{pos: (-0.5, -0.5, -0.5).into(), nml: ( 0.0, -1.0,  0.0).into()},
+        FGVertex{pos: ( 0.5, -0.5, -0.5).into(), nml: ( 0.0, -1.0,  0.0).into()},
+        FGVertex{pos: ( 0.5, -0.5,  0.5).into(), nml: ( 0.0, -1.0,  0.0).into()},
+        FGVertex{pos: ( 0.5, -0.5,  0.5).into(), nml: ( 0.0, -1.0,  0.0).into()},
+        FGVertex{pos: (-0.5, -0.5,  0.5).into(), nml: ( 0.0, -1.0,  0.0).into()},
+        FGVertex{pos: (-0.5, -0.5, -0.5).into(), nml: ( 0.0, -1.0,  0.0).into()},
+
+        FGVertex{pos: (-0.5,  0.5, -0.5).into(), nml: ( 0.0,  1.0,  0.0).into()},
+        FGVertex{pos: ( 0.5,  0.5, -0.5).into(), nml: ( 0.0,  1.0,  0.0).into()},
+        FGVertex{pos: ( 0.5,  0.5,  0.5).into(), nml: ( 0.0,  1.0,  0.0).into()},
+        FGVertex{pos: ( 0.5,  0.5,  0.5).into(), nml: ( 0.0,  1.0,  0.0).into()},
+        FGVertex{pos: (-0.5,  0.5,  0.5).into(), nml: ( 0.0,  1.0,  0.0).into()},
+        FGVertex{pos: (-0.5,  0.5, -0.5).into(), nml: ( 0.0,  1.0,  0.0).into()},
+    ];
+    return verts;
+}
+
 pub fn create_renderer(gl: &gl::Gl, res: &Resources) -> Renderer {
     
-    let shader_program = shader::Program::from_res(&gl, &res, "shaders/triangle").unwrap();
+    //Shaders available to the renderer
+    let lit_shader = shader::Program::from_res(&gl, &res, "shaders/lit").unwrap();
+    let light_shader = shader::Program::from_res(&gl, &res, "shaders/light").unwrap();
     // shader_program.setInt(c_str!("texture1"), 0);
-    // shader_program.setInt(c_str!("texture2"), 1);
-
-    let CUBE_VERTICES: [FGVertex; 36] = [
-        FGVertex{ pos: ( -0.5, -0.5, -0.5).into(), tex: ( 0.0, 0.0,).into()},
-        FGVertex{ pos: (  0.5, -0.5, -0.5).into(), tex: ( 1.0, 0.0,).into()},
-        FGVertex{ pos: (  0.5,  0.5, -0.5).into(), tex: ( 1.0, 1.0,).into()},
-        FGVertex{ pos: (  0.5,  0.5, -0.5).into(), tex: ( 1.0, 1.0,).into()},
-        FGVertex{ pos: ( -0.5,  0.5, -0.5).into(), tex: ( 0.0, 1.0,).into()},
-        FGVertex{ pos: ( -0.5, -0.5, -0.5).into(), tex: ( 0.0, 0.0,).into()},
-
-        FGVertex{ pos: ( -0.5, -0.5,  0.5).into(), tex: ( 0.0, 0.0,).into()},
-        FGVertex{ pos: (  0.5, -0.5,  0.5).into(), tex: ( 1.0, 0.0,).into()},
-        FGVertex{ pos: (  0.5,  0.5,  0.5).into(), tex: ( 1.0, 1.0,).into()},
-        FGVertex{ pos: (  0.5,  0.5,  0.5).into(), tex: ( 1.0, 1.0,).into()},
-        FGVertex{ pos: ( -0.5,  0.5,  0.5).into(), tex: ( 0.0, 1.0,).into()},
-        FGVertex{ pos: ( -0.5, -0.5,  0.5).into(), tex: ( 0.0, 0.0,).into()},
-
-        FGVertex{ pos: ( -0.5,  0.5,  0.5).into(), tex: ( 1.0, 0.0,).into()},
-        FGVertex{ pos: ( -0.5,  0.5, -0.5).into(), tex: ( 1.0, 1.0,).into()},
-        FGVertex{ pos: ( -0.5, -0.5, -0.5).into(), tex: ( 0.0, 1.0,).into()},
-        FGVertex{ pos: ( -0.5, -0.5, -0.5).into(), tex: ( 0.0, 1.0,).into()},
-        FGVertex{ pos: ( -0.5, -0.5,  0.5).into(), tex: ( 0.0, 0.0,).into()},
-        FGVertex{ pos: ( -0.5,  0.5,  0.5).into(), tex: ( 1.0, 0.0,).into()},
-
-        FGVertex{ pos: (  0.5,  0.5,  0.5).into(), tex: ( 1.0, 0.0,).into()},
-        FGVertex{ pos: (  0.5,  0.5, -0.5).into(), tex: ( 1.0, 1.0,).into()},
-        FGVertex{ pos: (  0.5, -0.5, -0.5).into(), tex: ( 0.0, 1.0,).into()},
-        FGVertex{ pos: (  0.5, -0.5, -0.5).into(), tex: ( 0.0, 1.0,).into()},
-        FGVertex{ pos: (  0.5, -0.5,  0.5).into(), tex: ( 0.0, 0.0,).into()},
-        FGVertex{ pos: (  0.5,  0.5,  0.5).into(), tex: ( 1.0, 0.0,).into()},
-
-        FGVertex{ pos: ( -0.5, -0.5, -0.5).into(), tex: ( 0.0, 1.0,).into()},
-        FGVertex{ pos: (  0.5, -0.5, -0.5).into(), tex: ( 1.0, 1.0,).into()},
-        FGVertex{ pos: (  0.5, -0.5,  0.5).into(), tex: ( 1.0, 0.0,).into()},
-        FGVertex{ pos: (  0.5, -0.5,  0.5).into(), tex: ( 1.0, 0.0,).into()},
-        FGVertex{ pos: ( -0.5, -0.5,  0.5).into(), tex: ( 0.0, 0.0,).into()},
-        FGVertex{ pos: ( -0.5, -0.5, -0.5).into(), tex: ( 0.0, 1.0,).into()},
-
-        FGVertex{ pos: ( -0.5,  0.5, -0.5).into(), tex: ( 0.0, 1.0,).into()},
-        FGVertex{ pos: (  0.5,  0.5, -0.5).into(), tex: ( 1.0, 1.0,).into()},
-        FGVertex{ pos: (  0.5,  0.5,  0.5).into(), tex: ( 1.0, 0.0,).into()},
-        FGVertex{ pos: (  0.5,  0.5,  0.5).into(), tex: ( 1.0, 0.0,).into()},
-        FGVertex{ pos: ( -0.5,  0.5,  0.5).into(), tex: ( 0.0, 0.0,).into()},
-        FGVertex{ pos: ( -0.5,  0.5, -0.5).into(), tex: ( 0.0, 1.0,).into()},
-    ];
+    
+    //Model information available to the renderer
+    let cube_vertices = get_cube_vertices();    
 
     let vbo = buffer::ArrayBuffer::new(gl);
     vbo.bind();
-    vbo.static_draw_data(&CUBE_VERTICES);
+    vbo.static_draw_data(&cube_vertices);
     vbo.unbind();
 
     // set up vertex array object
@@ -81,15 +91,23 @@ pub fn create_renderer(gl: &gl::Gl, res: &Resources) -> Renderer {
     vbo.unbind();
     vao.unbind();
 
+    // Configure OpenGL
+    // ----------------
+    unsafe {
+        gl.Enable(gl::DEPTH_TEST);
+    }
+
     return Renderer {
-        shader_program: shader_program,
+        lit_shader : lit_shader,
+        flat_shader : light_shader,
         vbo: vbo,
         vao: vao,
     };
 }
 
 pub struct Renderer {
-    shader_program: shader::Program,
+    lit_shader: shader::Program,
+    flat_shader: shader::Program,
     vbo: buffer::ArrayBuffer,
     vao: buffer::VertexArray,
 }
@@ -102,45 +120,91 @@ impl Renderer {
         width : i32, 
         height : i32,
         camera: &Camera,
-        cube_positions : &[Vector3<f32>; 10]) 
+        game_state: &GameState ) 
     {
-        
         unsafe {
             // render window contents here
             gl.ClearColor(0.2, 0.3, 0.3, 1.0);
-            gl.Clear(gl::COLOR_BUFFER_BIT);
+            gl.Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         }
         // gl::Enable(gl::BLEND);
         // gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
         // gl::Disable(gl::DEPTH_TEST);
 
-        self.shader_program.set_used();
+        // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
+        self.lit_shader.set_used();
+        self.lit_shader.set_vector3(c_str!("light.position"), &game_state.light_objects[0]);
+        self.lit_shader.set_vector3(c_str!("viewPos"), &game_state.light_objects[0]);
+
+        //light properties
+        let light_colour = Vector3 {
+            // x: ((1.0 * 2.0) as f32).sin(),
+            // y: ((1.0 * 0.7) as f32).sin(),
+            // z: ((1.0 * 1.3) as f32).sin(),
+            x: 1.0,
+            y: 1.0,
+            z: 1.0
+        };
+        let diffuse_colour = light_colour * 0.5;
+        let ambient_colour = diffuse_colour * 0.2;
+        self.lit_shader.set_vector3(c_str!("light.ambient"), &ambient_colour);
+        self.lit_shader.set_vector3(c_str!("light.diffuse"), &diffuse_colour);
+        self.lit_shader.set_vec3(c_str!("light.specular"), 1.0, 1.0, 1.0);
+
+        //material properties
+        self.lit_shader.set_vec3(c_str!("material.ambient"), 1.0, 0.5, 0.31);
+        self.lit_shader.set_vec3(c_str!("material.diffuse"), 1.0, 0.5, 0.31);
+        self.lit_shader.set_vec3(c_str!("material.specular"), 0.5, 0.5, 0.5);
+        self.lit_shader.set_float(c_str!("material.shininess"), 32.0);
+
+        //View Projection 
+        let view = camera.GetViewMatrix();
+        let projection: Matrix4<f32> = perspective(Deg(camera.Zoom), width as f32 / height as f32 , 0.1, 100.0);
+        self.lit_shader.set_mat4(c_str!("view"), &view);
+        self.lit_shader.set_mat4(c_str!("projection"), &projection);
+
+        // create transformations
+        // NOTE: cgmath requires axis vectors to be normalized!
+        // let model: Matrix4<f32> = Matrix4::from_axis_angle(
+        //     vec3(0.5, 1.0, 0.0).normalize(), 
+        //     Rad(1.0 as f32)
+        // );
+        let mut model = Matrix4::<f32>::identity();
+        self.lit_shader.set_mat4(c_str!("model"), &model);
+
+        self.vao.bind();
+
+        //render a cube
+        unsafe {
+            gl.DrawArrays(gl::TRIANGLES, 0, 36);
+        }
+
+        // for (i, position) in game_state.game_objects.iter().enumerate() {
+        //     // calculate the model matrix for each object and pass it to shader before drawing
+        //     let mut model: Matrix4<f32> = Matrix4::from_translation(*position);
+        //     let angle = 20.0 * i as f32;
+        //     model = model * Matrix4::from_axis_angle(vec3(1.0, 0.3, 0.5).normalize(), Deg(angle));
+        //     self.lit_shader.set_mat4(c_str!("model"), &model);
+
+        //     unsafe {
+        //         gl.DrawArrays(gl::TRIANGLES, 0, 36);
+        //     }
+
+        //     //only render 1 cube for now
+        //     break;
+        // }
+
+        //Also draw lamp object
+        self.flat_shader.set_used();
+        self.flat_shader.set_mat4(c_str!("projection"), &projection);
+        self.flat_shader.set_mat4(c_str!("view"), &view);
+
+        model = Matrix4::from_translation(game_state.light_objects[0]);
+        model = model * Matrix4::from_scale(0.2);  // a smaller cube
+        self.flat_shader.set_mat4(c_str!("model"), &model);
 
         unsafe {
-
-            // create transformations
-            // NOTE: cgmath requires axis vectors to be normalized!
-            let model: Matrix4<f32> = Matrix4::from_axis_angle(
-                vec3(0.5, 1.0, 0.0).normalize(), 
-                Rad(1.0 as f32)
-            );
-            let view = camera.GetViewMatrix();
-            let projection: Matrix4<f32> = perspective(Deg(camera.Zoom), width as f32 / height as f32 , 0.1, 100.0);
-
-            // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
-            self.shader_program.set_mat4(c_str!("view"), &view);
-            self.shader_program.set_mat4(c_str!("projection"), &projection);
-
-            self.vao.bind();
-            for (i, position) in cube_positions.iter().enumerate() {
-                // calculate the model matrix for each object and pass it to shader before drawing
-                let mut model: Matrix4<f32> = Matrix4::from_translation(*position);
-                let angle = 20.0 * i as f32;
-                model = model * Matrix4::from_axis_angle(vec3(1.0, 0.3, 0.5).normalize(), Deg(angle));
-                self.shader_program.set_mat4(c_str!("model"), &model);
-
-                gl.DrawArrays(gl::TRIANGLES, 0, 36);
-            }
+            gl.DrawArrays(gl::TRIANGLES, 0, 36);
         }
     }
 }
