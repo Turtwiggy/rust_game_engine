@@ -2,7 +2,7 @@ extern crate gl;
 
 use renderer_gl::*;
 use threed::camera::*;
-use resources::Resources;
+use util::resources::Resources;
 use game::{GameState};
 
 use cgmath::prelude::*;

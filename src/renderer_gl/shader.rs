@@ -1,5 +1,5 @@
 use gl;
-use crate::resources::{self, Resources};
+use crate::util::resources::{self, Resources};
 use std;
 use std::ffi::{CStr, CString};
 use cgmath::{Matrix, Matrix4, Vector3};

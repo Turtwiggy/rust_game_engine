@@ -15,21 +15,22 @@ extern crate c_string;
 extern crate cgmath;
 extern crate rand;
 
-pub mod resources;
-use resources::Resources;
-pub mod game_window;
-use game_window::GameWindow;
-pub mod renderer;
-use renderer::Renderer;
-pub mod renderer_gl;
-use renderer_gl::Viewport;
-pub mod threed;
-use threed::camera::{Camera, CameraMovement};
-pub mod game;
-use game::GameState;
-pub mod util;
-use util::profiling::ProfileInformation;
 pub mod gui;
+pub mod game_window;
+pub mod renderer;
+pub mod renderer_gl;
+pub mod threed;
+pub mod game;
+pub mod util;
+pub mod data;
+use crate::game_window::GameWindow;
+use crate::renderer::Renderer;
+use crate::renderer_gl::Viewport;
+use crate::threed::camera::{Camera, CameraMovement};
+use crate::game::GameState;
+use crate::util::profiling::ProfileInformation;
+use crate::util::resources::Resources;
+use crate::data::materials;
 
 use cgmath::{vec3, Point3, Vector3};
 use rand::{thread_rng, Rng};
@@ -237,8 +238,15 @@ fn main() {
     //let target_fps : f64 = current_display.refresh_rate as f64;
     //println!("Target FPS set to: {0}", target_fps);
 
-    // Game Objects
-    // ------------
+    // Load models 
+    // -----------
+    // let our_model = unsafe {
+    //     let model = models::load_model(&res, "models/lizard_wizard/lizard_wizard.obj");
+    //     model
+    // };
+
+    // Game State
+    // ----------
     let light_positions: [Vector3<f32>; 4] = [
         vec3( 1.0,  1.0,  1.0),
         vec3( 5.0,  5.0,  5.0),
@@ -251,7 +259,6 @@ fn main() {
         vec3( 0.0,  1.0,  0.0),
         vec3( 0.0,  0.0,  1.0),
     ];
-
     // Cubes
     let cube_positions: [Vector3<f32>; 10] = [
         vec3(0.0, 0.0, 0.0),
@@ -265,19 +272,19 @@ fn main() {
         vec3(1.5, 0.2, -1.5),
         vec3(-1.3, 1.0, -1.5),
     ];
-
-    // Initial Game State
-    // ------------------
-    let mut camera = Camera {
-        Position: Point3::new(0.0, 0.0, 3.0),
-        ..Camera::default()
-    };
     let mut state_current: GameState = GameState {
         game_objects: cube_positions,
         light_objects: light_positions,
         light_colours: light_colours
     };
     println!("gamestate bytes: {0}", std::mem::size_of::<GameState>());
+
+    // Camera
+    // ------
+    let mut camera = Camera {
+        Position: Point3::new(0.0, 0.0, 3.0),
+        ..Camera::default()
+    };
 
     // FPS Info & Profiling
     // --------
