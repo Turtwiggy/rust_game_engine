@@ -233,9 +233,9 @@ fn main() {
 
     // Initial Settings
     // ----------------
-    let current_display = game_window.get_current_display_mode();
-    let target_fps : f64 = current_display.refresh_rate as f64;
-    println!("Target FPS set to: {0}", target_fps);
+    //let current_display = game_window.get_current_display_mode();
+    //let target_fps : f64 = current_display.refresh_rate as f64;
+    //println!("Target FPS set to: {0}", target_fps);
 
     // Game Objects
     // ------------
