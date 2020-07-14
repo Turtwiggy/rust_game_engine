@@ -71,7 +71,7 @@ fn get_cube_vertices() -> [FGVertex; 36] {
 pub fn create_renderer(gl: &gl::Gl, res: &Resources) -> Renderer {
     
     //Shaders available to the renderer
-    let lit_shader = shader::Program::from_res(&gl, &res, "shaders/lit_point_atten").unwrap();
+    let lit_shader = shader::Program::from_res(&gl, &res, "shaders/lit_flashlight").unwrap();
     let light_shader = shader::Program::from_res(&gl, &res, "shaders/light").unwrap();
     // shader_program.setInt(c_str!("texture1"), 0);
     
@@ -135,18 +135,38 @@ impl Renderer {
         let view_pos = cgmath::Vector3{x: camera.Position.x, y: camera.Position.y, z: camera.Position.z};
         self.lit_shader.set_vector3(c_str!("viewPos"), &view_pos);
 
-        //Shader: lit_directional
+        //SHADER: lit_directional
+        //-----------------------
         // let light_direction = cgmath::Vector3{x: -0.2, y: -1.0, z: -0.3};
 
-        //Shader: lit_point_noatten
+        //SHADER: lit_point_noatten
+        //-------------------------
         //self.lit_shader.set_vector3(c_str!("light.position"), &game_state.light_objects[0]);
-
         // self.lit_shader.set_vector3(c_str!("light.direction"), &light_direction);
-        //Shader: lit_point_atten
-        self.lit_shader.set_vector3(c_str!("light.position"), &game_state.light_objects[0]);
+
+        //SHADER: lit_point_atten
+        //-----------------------
+        // self.lit_shader.set_vector3(c_str!("light.position"), &game_state.light_objects[0]);
+        // self.lit_shader.set_float(c_str!("light.constant"), 1.0);
+        // self.lit_shader.set_float(c_str!("light.linear"), 0.09);
+        // self.lit_shader.set_float(c_str!("light.quadratic"), 0.032);
+
+        //SHADER: lit_flashlight
+        //-----------------------
         self.lit_shader.set_float(c_str!("light.constant"), 1.0);
         self.lit_shader.set_float(c_str!("light.linear"), 0.09);
         self.lit_shader.set_float(c_str!("light.quadratic"), 0.032);
+
+        //self.lit_shader.set_vector3(c_str!("light.position"), &game_state.light_objects[0]);
+        let light_position = Vector3 {
+            x: camera.Position.x,
+            y: camera.Position.y,
+            z: camera.Position.z
+        };
+        self.lit_shader.set_vector3(c_str!("light.position"), &light_position);
+        self.lit_shader.set_vector3(c_str!("light.direction"), &camera.Front);
+        self.lit_shader.set_float(c_str!("light.cutOff"), 12.5f32.to_radians().cos());
+        self.lit_shader.set_float(c_str!("light.outerCutOff"), 17.5f32.to_radians().cos());
 
         //light properties
         let light_colour = Vector3 {
