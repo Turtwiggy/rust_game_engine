@@ -210,9 +210,9 @@ fn tick(delta_time: f64, game_state: &mut GameState, timer_seconds: &f64) {
     //Make light source move around
     //println!("timer_seconds value: {0}", timer_seconds);
     let mut light_pos = game_state.light_objects[0];
-    let new_x = 2.0 * timer_seconds.sin();
+    let new_x = timer_seconds.sin();
     let new_y = -0.3;
-    let new_z = 1.5  * timer_seconds.cos();
+    let new_z = timer_seconds.cos();
     light_pos = vec3(new_x as f32, new_y as f32, new_z as f32);
     game_state.light_objects[0] = light_pos;
 }
@@ -239,7 +239,19 @@ fn main() {
 
     // Game Objects
     // ------------
-    let light_positions: [Vector3<f32>; 1] = [vec3(1.0, 1.0, 1.0)];
+    let light_positions: [Vector3<f32>; 4] = [
+        vec3( 1.0,  1.0,  1.0),
+        vec3( 5.0,  5.0,  5.0),
+        vec3(-2.0, -2.0, -2.0),
+        vec3(-6.0, -6.0, -6.0),
+    ];
+    let light_colours: [Vector3<f32>; 4] = [
+        vec3( 1.0,  1.0,  1.0),
+        vec3( 1.0,  0.0,  0.0),
+        vec3( 0.0,  1.0,  0.0),
+        vec3( 0.0,  0.0,  1.0),
+    ];
+
     // Cubes
     let cube_positions: [Vector3<f32>; 10] = [
         vec3(0.0, 0.0, 0.0),
@@ -263,6 +275,7 @@ fn main() {
     let mut state_current: GameState = GameState {
         game_objects: cube_positions,
         light_objects: light_positions,
+        light_colours: light_colours
     };
     println!("gamestate bytes: {0}", std::mem::size_of::<GameState>());
 
