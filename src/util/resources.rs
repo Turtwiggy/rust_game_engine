@@ -2,6 +2,9 @@ use std::ffi;
 use std::fs;
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
+use tobj;
+
+use crate::threed::model::FGModel;
 
 #[derive(Debug, Fail)]
 pub enum Error {
@@ -51,6 +54,16 @@ impl Resources {
         }
 
         Ok(unsafe { ffi::CString::from_vec_unchecked(buffer) })
+    }
+
+    pub fn load_model(&self, resource_name: &str) -> Result<(Vec<tobj::Model>, Vec<tobj::Material>), tobj::LoadError> {
+        
+        let path = resource_name_to_path(&self.root_path, resource_name);
+        println!("loading model from: {0}", path.display());
+
+        let obj = tobj::load_obj(path, true);
+
+        return obj;     
     }
 }
 

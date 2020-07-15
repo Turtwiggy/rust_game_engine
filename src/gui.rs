@@ -14,8 +14,6 @@ pub fn ui(
     Window::new(im_str!("Hello world"))
         .size([300.0, 110.0], Condition::FirstUseEver)
         .build(&ui, || {
-            ui.text(im_str!("Hello world!"));
-
             ui.text(format!(
                 "Timer: {:.1}", timer
             ));

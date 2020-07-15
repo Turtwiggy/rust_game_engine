@@ -14,6 +14,8 @@ extern crate render_gl_derive;
 extern crate c_string;
 extern crate cgmath;
 extern crate rand;
+extern crate image;
+extern crate tobj;
 
 pub mod gui;
 pub mod game_window;
@@ -27,6 +29,9 @@ use crate::game_window::GameWindow;
 use crate::renderer::Renderer;
 use crate::renderer_gl::Viewport;
 use crate::threed::camera::{Camera, CameraMovement};
+use crate::threed::mesh;
+use crate::threed::mesh::{FGMesh};
+use crate::threed::model::{FGModel};
 use crate::game::GameState;
 use crate::util::profiling::ProfileInformation;
 use crate::util::resources::Resources;
@@ -240,42 +245,45 @@ fn main() {
 
     // Load models 
     // -----------
-    // let our_model = unsafe {
-    //     let model = models::load_model(&res, "models/lizard_wizard/lizard_wizard.obj");
-    //     model
-    // };
+    let cube_model = FGModel::new(&game_window.gl, &res, "models/lizard_wizard/lizard_wizard.obj");
+    //let sponza_model = FGModel::new(&game_window.gl, &res, "models/sponza/sponza.obj");
 
     // Game State
     // ----------
-    let light_positions: [Vector3<f32>; 4] = [
-        vec3( 1.0,  1.0,  1.0),
-        vec3( 5.0,  5.0,  5.0),
-        vec3(-2.0, -2.0, -2.0),
-        vec3(-6.0, -6.0, -6.0),
-    ];
-    let light_colours: [Vector3<f32>; 4] = [
-        vec3( 1.0,  1.0,  1.0),
-        vec3( 1.0,  0.0,  0.0),
-        vec3( 0.0,  1.0,  0.0),
-        vec3( 0.0,  0.0,  1.0),
-    ];
-    // Cubes
-    let cube_positions: [Vector3<f32>; 10] = [
-        vec3(0.0, 0.0, 0.0),
-        vec3(2.0, 5.0, -15.0),
-        vec3(-1.5, -2.2, -2.5),
-        vec3(-3.8, -2.0, -12.3),
-        vec3(2.4, -0.4, -3.5),
-        vec3(-1.7, 3.0, -7.5),
-        vec3(1.3, -2.0, -2.5),
-        vec3(1.5, 2.0, -2.5),
-        vec3(1.5, 0.2, -1.5),
-        vec3(-1.3, 1.0, -1.5),
-    ];
+    let mut light_positions = Vec::new();
+    light_positions.push(vec3( 1.0,  1.0,  1.0));
+    light_positions.push(vec3( 1.0,  1.0,  1.0));
+    light_positions.push(vec3( 5.0,  5.0,  5.0));
+    light_positions.push(vec3(-2.0, -2.0, -2.0));
+    light_positions.push(vec3(-6.0, -6.0, -6.0));
+
+    let mut light_colours = Vec::new();
+    light_colours.push(vec3( 1.0,  1.0,  1.0));
+    light_colours.push(vec3( 1.0,  0.0,  0.0));
+    light_colours.push(vec3( 0.0,  1.0,  0.0));
+    light_colours.push(vec3( 0.0,  0.0,  1.0));
+    light_colours.push(vec3( 0.5,  0.5,  0.5));
+
+    let mut cube_positions = Vec::new();
+    cube_positions.push(vec3(0.0, 0.0, 0.0));
+    cube_positions.push(vec3(2.0, 5.0, -15.0));
+    cube_positions.push(vec3(-1.5, -2.2, -2.5));
+    cube_positions.push(vec3(-3.8, -2.0, -12.3));
+    cube_positions.push(vec3(2.4, -0.4, -3.5));
+    cube_positions.push(vec3(-1.7, 3.0, -7.5));
+    cube_positions.push(vec3(1.3, -2.0, -2.5));
+    cube_positions.push(vec3(1.5, 2.0, -2.5));
+    cube_positions.push(vec3(1.5, 0.2, -1.5));
+    cube_positions.push(vec3(-1.3, 1.0, -1.5));
+
+    let mut sponza_position = Vec::new();
+    sponza_position.push(vec3(0.0, 0.0, 0.0));
+
     let mut state_current: GameState = GameState {
         game_objects: cube_positions,
         light_objects: light_positions,
-        light_colours: light_colours
+        light_colours: light_colours,
+        sponza_position: sponza_position
     };
     println!("gamestate bytes: {0}", std::mem::size_of::<GameState>());
 
@@ -350,11 +358,14 @@ fn main() {
         time_now = Instant::now();
         let invert_mouse : bool = true;
         let mut y : i32 = mouse_state.y();
-        if invert_mouse
+        if game_window.get_mouse_grabbed()
         {
-            y *= -1;
-        }
-        camera.ProcessMouseMovement(mouse_state.x() as f32, y as f32, true);
+            if invert_mouse
+            {
+                y *= -1;
+            }
+            camera.ProcessMouseMovement(mouse_state.x() as f32, y as f32, true);
+        };
         camera.Update(delta_s);
         current_profile_information.camera_update = time_now.elapsed().as_millis();
 
@@ -372,6 +383,8 @@ fn main() {
             game_window.sdl_window.size(),
             &camera,
             &state_current,
+            &cube_model,
+            &cube_model
         );
         current_profile_information.renderer_update = time_now.elapsed().as_millis();
 
