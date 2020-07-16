@@ -1,7 +1,7 @@
 extern crate gl;
 extern crate half;
 extern crate imgui;
-extern crate imgui_opengl_renderer;
+// extern crate imgui_opengl_renderer;
 extern crate imgui_sdl2;
 extern crate nalgebra;
 extern crate sdl2;
@@ -14,8 +14,8 @@ extern crate render_gl_derive;
 extern crate c_string;
 extern crate cgmath;
 extern crate rand;
-extern crate image;
 extern crate tobj;
+extern crate image;
 
 pub mod gui;
 pub mod game_window;
@@ -234,6 +234,8 @@ fn main() {
     // Game Window
     // -----------
     let mut game_window = game_window::create_game_window(&game_name, init_width, init_height);
+    game_window.set_window_icon(&res, "icons/game_icon.bmp");
+
     let mut viewport = renderer_gl::Viewport::for_window(init_width as i32, init_height as i32);
     let renderer = renderer::create_renderer(&game_window.gl, &res);
 

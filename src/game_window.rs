@@ -1,5 +1,7 @@
-use sdl2::surface::SurfaceRef;
 use sdl2::video::FullscreenType;
+use sdl2::surface::Surface;
+
+use crate::util::resources::{Resources};
 
 pub fn create_game_window(n: &str, w: u32, h: u32) -> GameWindow {
     println!("creating game window: {0}", n);
@@ -91,20 +93,6 @@ impl GameWindow {
         return false;
     }
     
-    /// Use this function to set the icon for a window.
-    ///
-    /// # Example:
-    /// ```compile_fail
-    /// // requires "--features 'image'"
-    /// use sdl2::surface::Surface;
-    ///
-    /// let window_icon = Surface::from_file("/path/to/icon.png")?;
-    /// window.set_icon(window_icon);
-    /// ```
-    pub fn set_icon<S: AsRef<SurfaceRef>>(&mut self, icon: S) {
-        self.sdl_window.set_icon(icon);
-    }
-
     // pub fn get_monitor_refresh_rate(&self, display: i32) -> f32 {
     //     let display_mode = self.sdl_window.display_mode().unwrap();
 
@@ -113,6 +101,14 @@ impl GameWindow {
 
     pub fn get_current_display_mode(&self) -> sdl2::video::DisplayMode {
         return self.sdl_window.display_mode().unwrap();
+    }
+
+    pub fn set_window_icon(&mut self, res : &Resources, path: &str) {
+
+        //todo better error chacking
+        let image = res.load_image(path).unwrap();
+
+        self.sdl_window.set_icon(&image);
     }
 
     /* MOUSE */

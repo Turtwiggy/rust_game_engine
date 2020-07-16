@@ -3,8 +3,10 @@ use std::fs;
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
 use tobj;
+use image;
 
 use crate::threed::model::FGModel;
+use sdl2::surface::Surface;
 
 #[derive(Debug, Fail)]
 pub enum Error {
@@ -64,6 +66,35 @@ impl Resources {
         let obj = tobj::load_obj(path, true);
 
         return obj;     
+    }
+
+    pub fn load_image(&self, resource_name: &str) -> Result<sdl2::surface::Surface, String> {
+
+        let path = resource_name_to_path(&self.root_path, resource_name);
+        println!("loading image from: {0}", path.display());
+
+        use image::DynamicImage;
+        use image::GenericImageView;
+        use sdl2::pixels::PixelFormatEnum;
+
+        //let img = image::open(path).unwrap();
+
+        // // let mut imgbuf = image::ImageBuffer::new(img.dimensions().0, img.
+        
+        // let raw_image_data : Vec<u8>;
+
+        // for x in 0..img.dimensions().0 {
+        //     for y in 0..img.dimensions().1 {
+        //         let rgba = img.get_pixel(x, y);
+
+        //         raw_image_data.push()
+        //     }
+        // }
+        
+        // let icon = Surface::from_data(&buffer, img.width(), img.height(), , PixelFormatEnum::);
+
+        let icon = Surface::load_bmp(path);
+        return icon;
     }
 }
 
