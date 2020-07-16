@@ -30,9 +30,9 @@ impl FGModel {
         model
     }
 
-    pub fn Draw(&self, gl: &gl::Gl, shader: &Program) {
+    pub fn draw(&self, gl: &gl::Gl, shader: &Program) {
         for mesh in &self.meshes {
-            mesh.Draw(gl, shader);
+            mesh.draw(gl, shader);
         }
     }
 
@@ -52,7 +52,7 @@ impl FGModel {
             let indices: Vec<u32> = mesh.indices.clone();
 
             let (p, n, t) = (&mesh.positions, &mesh.normals, &mesh.texcoords);
-            println!("loading model {} with {} vertices {} indices", model.name, num_vertices, indices.len());
+            println!("Model from {}, mesh: {} with {} vertices {} indices", path, model.name, num_vertices, indices.len());
             for i in 0..num_vertices {
                 vertices.push(FGVertex {
                     pos: (p[i * 3], p[i * 3 + 1], p[i * 3 + 2]).into(),

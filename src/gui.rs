@@ -24,28 +24,28 @@ pub fn ui(
 
             ui.text(im_str!("Previous Frame Information"));
             ui.text(format!(
-                "Frame Start: {}", profie_info.frame_start
+                "Frame Start: {0}", profie_info.frame_start
             ));
             ui.text(format!(
-                "Events: {}", profie_info.events
+                "Events: {0}", profie_info.events
             ));
             ui.text(format!(
-                "Camera Update: {}", profie_info.camera_update
+                "Camera Update: {0}", profie_info.camera_update
             ));
             ui.text(format!(
-                "Gamestate Update: {}", profie_info.gamestate_update
+                "Gamestate Update: {0}", profie_info.gamestate_update
             ));
             ui.text(format!(
-                "Renderer Update: {}", profie_info.renderer_update
+                "Renderer Update: {0}", profie_info.renderer_update
             ));
             ui.text(format!(
-                "Gui Update: {}", profie_info.gui_update
+                "Gui Update: {0}", profie_info.gui_update
             ));
             ui.text(format!(
-                "Frame End: {}", profie_info.frame_end
+                "Frame End: {0}", profie_info.frame_end
             ));
             ui.text(format!(
-                "Total Loop: {}", profie_info.full_loop
+                "Total Loop: {0}", profie_info.full_loop
             ));
         
             ui.separator();

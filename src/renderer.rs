@@ -243,9 +243,13 @@ impl Renderer {
         }
 
         {
-                let model: Matrix4<f32> = Matrix4::from_translation(game_state.sponza_position[0]);
-                self.lit_shader.set_mat4(c_str!("model"), &model);
-                sponza_model.Draw(gl, &self.lit_shader);
+            let mut model: Matrix4<f32> = Matrix4::from_translation(game_state.sponza_position[0]);
+
+            let scale = 0.01;
+            model = model * Matrix4::from_scale(scale);
+
+            self.lit_shader.set_mat4(c_str!("model"), &model);
+            sponza_model.draw(gl, &self.lit_shader);
         }
 
         // 2nd. render pass: now draw slightly scaled versions of the objects, this time disabling stencil writing.
@@ -307,9 +311,12 @@ impl Renderer {
             self.flat_shader.set_vector3(c_str!("material.ambient"), &ambient_colour);
 
             unsafe {
-                cube_model.Draw(gl, &self.flat_shader)
+                cube_model.draw(gl, &self.flat_shader)
                 //gl.DrawArrays(gl::TRIANGLES, 0, 36);
             }
         }
+
+   
+
     }
 }

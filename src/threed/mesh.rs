@@ -88,7 +88,7 @@ impl FGMesh {
     }
 
     /// render the mesh
-    pub fn Draw(&self, gl: &gl::Gl, shader: &shader::Program) {
+    pub fn draw(&self, gl: &gl::Gl, shader: &shader::Program) {
         // bind appropriate textures
         // let mut diffuseNr  = 0;
         // let mut specularNr = 0;

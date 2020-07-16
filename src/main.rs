@@ -217,7 +217,7 @@ fn tick(delta_time: f64, game_state: &mut GameState, timer_seconds: &f64) {
     //println!("timer_seconds value: {0}", timer_seconds);
     let mut light_pos = game_state.light_objects[0];
     let new_x = timer_seconds.sin();
-    let new_y = -0.3;
+    let new_y = light_pos.y;
     let new_z = timer_seconds.cos();
     light_pos = vec3(new_x as f32, new_y as f32, new_z as f32);
     game_state.light_objects[0] = light_pos;
@@ -246,7 +246,11 @@ fn main() {
     // Load models 
     // -----------
     let cube_model = FGModel::new(&game_window.gl, &res, "models/lizard_wizard/lizard_wizard.obj");
-    //let sponza_model = FGModel::new(&game_window.gl, &res, "models/sponza/sponza.obj");
+    println!("model size: {}", std::mem::size_of_val(&cube_model));
+
+    let sponza_model = FGModel::new(&game_window.gl, &res, "models/sponza/sponza.obj");
+    println!("sponza size: {}", std::mem::size_of_val(&sponza_model));
+    println!("sponza has {} meshes", sponza_model.meshes.len());
 
     // Game State
     // ----------
@@ -384,7 +388,7 @@ fn main() {
             &camera,
             &state_current,
             &cube_model,
-            &cube_model
+            &sponza_model
         );
         current_profile_information.renderer_update = time_now.elapsed().as_millis();
 
