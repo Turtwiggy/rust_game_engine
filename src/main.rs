@@ -32,6 +32,7 @@ use crate::renderer_gl::Viewport;
 use crate::threed::camera::{Camera, CameraMovement};
 use crate::threed::mesh::{FGMesh};
 use crate::threed::model::{FGModel};
+use crate::threed::textures;
 use crate::game::GameState;
 use crate::util::profiling::ProfileInformation;
 use crate::util::resources::Resources;
@@ -291,7 +292,7 @@ fn main() {
     sponza_position.push(vec3(0.0, 0.0, 0.0));
 
     let mut plane_position = Vec::new();
-    plane_position.push(vec3(0.0, 0.0, 0.0));
+    plane_position.push(vec3(0.0, 5.0, 0.0));
 
     let mut grass_position = Vec::new();
     grass_position.push(vec3(0.0, 0.0, 0.0));
@@ -309,6 +310,20 @@ fn main() {
         grass_position: grass_position
     };
     println!("gamestate bytes: {0}", std::mem::size_of::<GameState>());
+
+    // Skybox
+    // ------
+    // let cubeTexture = textures::loadTexture(&game_window.gl, "resources/textures/container.jpg");
+    let faces = [
+        "skybox/skybox-default/right.jpg",
+        "skybox/skybox-default/left.jpg",
+        "skybox/skybox-default/top.jpg",
+        "skybox/skybox-default/bottom.jpg",
+        "skybox/skybox-default/back.jpg",
+        "skybox/skybox-default/front.jpg"
+    ];
+    let cubemap_texture : u32 =  res.load_cubemap(&game_window.gl, &faces);
+    let (cubemap_vao, cubemap_vbo) = FGMesh::create_skybox_vertices(&game_window.gl);
 
     // Camera
     // ------
@@ -406,10 +421,12 @@ fn main() {
             game_window.sdl_window.size(),
             &camera,
             &state_current,
+            //models and textures below... could be improved
             &cube_model,
             &sponza_model,
             &plane_vao,
-            &plane_vao
+            &cubemap_texture,
+            &cubemap_vao
         );
         current_profile_information.renderer_update = time_now.elapsed().as_millis();
 

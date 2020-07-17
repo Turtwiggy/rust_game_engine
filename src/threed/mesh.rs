@@ -137,7 +137,7 @@ impl FGMesh {
         unsafe {
             gl.DrawElements(gl::TRIANGLES, self.indices.len() as GLsizei, gl::UNSIGNED_INT, ptr::null());
 
-            gl.BindVertexArray(0);
+            self.VAO.unbind();
             // always good practice to set everything back to defaults once configured.
             gl.ActiveTexture(gl::TEXTURE0);
         }
@@ -235,5 +235,62 @@ impl FGMesh {
         FGVertex::vertex_attrib_pointers(gl);
 
         vao
+    }
+
+    pub fn create_skybox_vertices(gl : &gl::Gl) -> (buffer::VertexArray, buffer::ArrayBuffer) {
+        let vao = buffer::VertexArray::new(gl);
+        let vbo = buffer::ArrayBuffer::new(gl);
+
+        let mut verts : Vec<FGVertex> = Vec::new();
+        verts.push(FGVertex{pos:(-1.0,  1.0, -1.0).into(),..FGVertex::default()});
+        verts.push(FGVertex{pos:(-1.0, -1.0, -1.0).into(),..FGVertex::default()});
+        verts.push(FGVertex{pos:( 1.0, -1.0, -1.0).into(),..FGVertex::default()});
+        verts.push(FGVertex{pos:( 1.0, -1.0, -1.0).into(),..FGVertex::default()});
+        verts.push(FGVertex{pos:( 1.0,  1.0, -1.0).into(),..FGVertex::default()});
+        verts.push(FGVertex{pos:(-1.0,  1.0, -1.0).into(),..FGVertex::default()});
+
+        verts.push(FGVertex{pos:(-1.0, -1.0,  1.0).into(),..FGVertex::default()});
+        verts.push(FGVertex{pos:(-1.0, -1.0, -1.0).into(),..FGVertex::default()});
+        verts.push(FGVertex{pos:(-1.0,  1.0, -1.0).into(),..FGVertex::default()});
+        verts.push(FGVertex{pos:(-1.0,  1.0, -1.0).into(),..FGVertex::default()});
+        verts.push(FGVertex{pos:(-1.0,  1.0,  1.0).into(),..FGVertex::default()});
+        verts.push(FGVertex{pos:(-1.0, -1.0,  1.0).into(),..FGVertex::default()});
+
+        verts.push(FGVertex{pos:( 1.0, -1.0, -1.0).into(),..FGVertex::default()});
+        verts.push(FGVertex{pos:( 1.0, -1.0,  1.0).into(),..FGVertex::default()});
+        verts.push(FGVertex{pos:( 1.0,  1.0,  1.0).into(),..FGVertex::default()});
+        verts.push(FGVertex{pos:( 1.0,  1.0,  1.0).into(),..FGVertex::default()});
+        verts.push(FGVertex{pos:( 1.0,  1.0, -1.0).into(),..FGVertex::default()});
+        verts.push(FGVertex{pos:( 1.0, -1.0, -1.0).into(),..FGVertex::default()});
+
+        verts.push(FGVertex{pos:(-1.0, -1.0,  1.0).into(),..FGVertex::default()});
+        verts.push(FGVertex{pos:(-1.0,  1.0,  1.0).into(),..FGVertex::default()});
+        verts.push(FGVertex{pos:( 1.0,  1.0,  1.0).into(),..FGVertex::default()});
+        verts.push(FGVertex{pos:( 1.0,  1.0,  1.0).into(),..FGVertex::default()});
+        verts.push(FGVertex{pos:( 1.0, -1.0,  1.0).into(),..FGVertex::default()});
+        verts.push(FGVertex{pos:(-1.0, -1.0,  1.0).into(),..FGVertex::default()});
+
+        verts.push(FGVertex{pos:(-1.0,  1.0, -1.0).into(),..FGVertex::default()});
+        verts.push(FGVertex{pos:( 1.0,  1.0, -1.0).into(),..FGVertex::default()});
+        verts.push(FGVertex{pos:( 1.0,  1.0,  1.0).into(),..FGVertex::default()});
+        verts.push(FGVertex{pos:( 1.0,  1.0,  1.0).into(),..FGVertex::default()});
+        verts.push(FGVertex{pos:(-1.0,  1.0,  1.0).into(),..FGVertex::default()});
+        verts.push(FGVertex{pos:(-1.0,  1.0, -1.0).into(),..FGVertex::default()});
+
+        verts.push(FGVertex{pos:(-1.0, -1.0, -1.0).into(),..FGVertex::default()});
+        verts.push(FGVertex{pos:(-1.0, -1.0,  1.0).into(),..FGVertex::default()});
+        verts.push(FGVertex{pos:( 1.0, -1.0, -1.0).into(),..FGVertex::default()});
+        verts.push(FGVertex{pos:( 1.0, -1.0, -1.0).into(),..FGVertex::default()});
+        verts.push(FGVertex{pos:(-1.0, -1.0,  1.0).into(),..FGVertex::default()});
+        verts.push(FGVertex{pos:( 1.0, -1.0,  1.0).into(),..FGVertex::default()});
+
+        vao.bind();
+
+        vbo.bind();
+        vbo.static_draw_data(&verts);
+
+        FGVertex::vertex_attrib_pointers(gl);
+
+        (vao, vbo)
     }
 }

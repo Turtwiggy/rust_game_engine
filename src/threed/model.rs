@@ -3,9 +3,6 @@ use std::path::Path;
 
 use cgmath::{vec2, vec3};
 use gl;
-use image;
-use image::DynamicImage::*;
-use image::GenericImage;
 use tobj;
 use tobj::Model;
 
@@ -137,3 +134,4 @@ impl FGModel {
 
 //     textureID
 // }
+

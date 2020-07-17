@@ -17,6 +17,10 @@ pub fn create_renderer(gl: &gl::Gl, res: &Resources) -> Renderer {
         shader::Program::from_res(&gl, &res, "shaders/lit_multiple_lights_no_tex").unwrap();
     let light_shader = shader::Program::from_res(&gl, &res, "shaders/lit_directional").unwrap();
     let stencil_shader = shader::Program::from_res(&gl, &res, "shaders/stencil_border").unwrap();
+
+    let skybox_shader = shader::Program::from_res(&gl, &res, "shaders/skybox").unwrap();
+    skybox_shader.set_used();
+    skybox_shader.set_int(c_str!("skybox"), 0);
     // shader_program.setInt(c_str!("texture1"), 0);
 
     // Configure OpenGL
@@ -37,6 +41,7 @@ pub fn create_renderer(gl: &gl::Gl, res: &Resources) -> Renderer {
         lit_shader: lit_shader,
         flat_shader: light_shader,
         border_shader: stencil_shader,
+        skybox_shader: skybox_shader,
     };
 }
 
@@ -44,6 +49,7 @@ pub struct Renderer {
     lit_shader: shader::Program,
     flat_shader: shader::Program,
     border_shader: shader::Program,
+    skybox_shader: shader::Program,
 }
 
 impl Renderer {
@@ -55,8 +61,9 @@ impl Renderer {
         game_state: &GameState,
         cube_model: &FGModel,
         sponza_model: &FGModel,
-        plane_verts: &buffer::VertexArray,
-        transparent_verts: &buffer::VertexArray,
+        plane_vao: &buffer::VertexArray,
+        cubemap_texture: &u32,
+        cubemap_vao: &buffer::VertexArray,
     ) {
         unsafe {
             // render window contents here
@@ -66,7 +73,7 @@ impl Renderer {
         }
 
         //View Projection
-        let view = camera.GetViewMatrix();
+        let mut view = camera.GetViewMatrix();
         let projection: Matrix4<f32> = perspective(
             Deg(camera.Zoom),
             window_size.0 as f32 / window_size.1 as f32,
@@ -287,31 +294,43 @@ impl Renderer {
         // }
 
         //Also draw lamp objects
-        let light_direction = cgmath::Vector3{x: -0.2, y: -1.0, z: -0.3};
+        let light_direction = cgmath::Vector3 {
+            x: -0.2,
+            y: -1.0,
+            z: -0.3,
+        };
         //Shader: Lit Directional
         self.flat_shader.set_used();
         self.flat_shader.set_mat4(c_str!("projection"), &projection);
         self.flat_shader.set_mat4(c_str!("view"), &view);
         //cube's material properties
-        self.flat_shader.set_vec3(c_str!("material.specular"), 0.5, 0.5, 0.5);
-        self.flat_shader.set_float(c_str!("material.shininess"), 32.0);
+        self.flat_shader
+            .set_vec3(c_str!("material.specular"), 0.5, 0.5, 0.5);
+        self.flat_shader
+            .set_float(c_str!("material.shininess"), 32.0);
         //flat lighting
-        self.flat_shader.set_vector3(c_str!("light.direction"), &light_direction);
-        self.flat_shader.set_vec3(c_str!("light.ambient"),  0.2, 0.2, 0.2);
-        self.flat_shader.set_vec3(c_str!("light.diffuse"),  0.5, 0.5, 0.5); // darken diffuse light a bit
-        self.flat_shader.set_vec3(c_str!("light.specular"), 1.0, 1.0, 1.0);
+        self.flat_shader
+            .set_vector3(c_str!("light.direction"), &light_direction);
+        self.flat_shader
+            .set_vec3(c_str!("light.ambient"), 0.2, 0.2, 0.2);
+        self.flat_shader
+            .set_vec3(c_str!("light.diffuse"), 0.5, 0.5, 0.5); // darken diffuse light a bit
+        self.flat_shader
+            .set_vec3(c_str!("light.specular"), 1.0, 1.0, 1.0);
 
-        for(i, position) in game_state.light_objects.iter().enumerate(){
+        for (i, position) in game_state.light_objects.iter().enumerate() {
             // calculate the model matrix for each object and pass it to shader before drawing
             let mut model: Matrix4<f32> = Matrix4::from_translation(*position);
 
-            model = model * Matrix4::from_scale(0.2);  // a smaller cube
+            model = model * Matrix4::from_scale(0.2); // a smaller cube
             self.flat_shader.set_mat4(c_str!("model"), &model);
 
             //Set material
-            self.flat_shader.set_vector3(c_str!("material.diffuse"), &game_state.light_colours[i]);
+            self.flat_shader
+                .set_vector3(c_str!("material.diffuse"), &game_state.light_colours[i]);
             let ambient_colour = game_state.light_colours[i] * 0.2;
-            self.flat_shader.set_vector3(c_str!("material.ambient"), &ambient_colour);
+            self.flat_shader
+                .set_vector3(c_str!("material.ambient"), &ambient_colour);
 
             unsafe {
                 cube_model.draw(gl, &self.flat_shader)
@@ -321,12 +340,35 @@ impl Renderer {
 
         {
             //Draw a plane
-            plane_verts.bind();
-            let mut model: Matrix4<f32> = Matrix4::from_translation(game_state.plane_position[0]);
-            unsafe{
+            plane_vao.bind();
+
+            let model: Matrix4<f32> = Matrix4::from_translation(game_state.plane_position[0]);
+            self.flat_shader.set_mat4(c_str!("model"), &model);
+
+            unsafe {
                 gl.DrawArrays(gl::TRIANGLES, 0, 36);
             }
         }
 
+        // draw skybox as last
+        unsafe {
+            gl.DepthFunc(gl::LEQUAL); // change depth function so depth test passes when values are equal to depth buffer's content
+            self.skybox_shader.set_used();
+            // remove translation from the view matrix
+            view.w[0] = 0.0;
+            view.w[1] = 0.0;
+            view.w[2] = 0.0;
+            self.skybox_shader
+                .set_mat4(c_str!("view"), &view);
+            self.skybox_shader
+                .set_mat4(c_str!("projection"), &projection);
+            // skybox cube
+            cubemap_vao.bind();
+            gl.ActiveTexture(gl::TEXTURE0);
+            gl.BindTexture(gl::TEXTURE_CUBE_MAP, *cubemap_texture);
+            gl.DrawArrays(gl::TRIANGLES, 0, 36);
+            cubemap_vao.unbind();
+            gl.DepthFunc(gl::LESS); // set depth function back to default
+        }
     }
 }

@@ -1,9 +1,16 @@
+use image;
+use image::DynamicImage::*;
+use image::GenericImage;
+use image::{open, DynamicImage};
 use std::ffi;
+use std::ffi::CStr;
 use std::fs;
 use std::io::{self, Read};
+use std::mem;
+use std::os::raw::c_void;
 use std::path::{Path, PathBuf};
+use std::ptr;
 use tobj;
-use image;
 
 use crate::threed::model::FGModel;
 use sdl2::surface::Surface;
@@ -58,43 +65,91 @@ impl Resources {
         Ok(unsafe { ffi::CString::from_vec_unchecked(buffer) })
     }
 
-    pub fn load_model(&self, resource_name: &str) -> Result<(Vec<tobj::Model>, Vec<tobj::Material>), tobj::LoadError> {
-        
+    pub fn load_model(
+        &self,
+        resource_name: &str,
+    ) -> Result<(Vec<tobj::Model>, Vec<tobj::Material>), tobj::LoadError> {
         let path = resource_name_to_path(&self.root_path, resource_name);
         println!("loading model from: {0}", path.display());
 
         let obj = tobj::load_obj(path, true);
 
-        return obj;     
+        return obj;
     }
 
     pub fn load_image(&self, resource_name: &str) -> Result<sdl2::surface::Surface, String> {
-
         let path = resource_name_to_path(&self.root_path, resource_name);
         println!("loading image from: {0}", path.display());
 
-        use image::DynamicImage;
-        use image::GenericImageView;
-        use sdl2::pixels::PixelFormatEnum;
-
-        //let img = image::open(path).unwrap();
-
-        // // let mut imgbuf = image::ImageBuffer::new(img.dimensions().0, img.
-        
-        // let raw_image_data : Vec<u8>;
-
-        // for x in 0..img.dimensions().0 {
-        //     for y in 0..img.dimensions().1 {
-        //         let rgba = img.get_pixel(x, y);
-
-        //         raw_image_data.push()
-        //     }
-        // }
-        
-        // let icon = Surface::from_data(&buffer, img.width(), img.height(), , PixelFormatEnum::);
-
         let icon = Surface::load_bmp(path);
-        return icon;
+
+        icon
+    }
+
+    /// loads a cubemap texture from 6 individual texture faces
+    /// order:
+    /// +X (right)
+    /// -X (left)
+    /// +Y (top)
+    /// -Y (bottom)
+    /// +Z (front)
+    /// -Z (back)
+    /// -------------------------------------------------------
+    pub fn load_cubemap(&self, gl: &gl::Gl, faces: &[&str]) -> u32 {
+        unsafe {
+            let mut texture_id = 0;
+
+            gl.GenTextures(1, &mut texture_id);
+            gl.BindTexture(gl::TEXTURE_CUBE_MAP, texture_id);
+
+            for (i, face) in faces.iter().enumerate() {
+                let path = resource_name_to_path(&self.root_path, face);
+                println!("trying to load cubemap from: {}", face);
+                let img = image::open(path).expect("Cubemap texture failed to load");
+
+                let data = img.raw_pixels();
+                gl.TexImage2D(
+                    gl::TEXTURE_CUBE_MAP_POSITIVE_X + i as u32,
+                    0,
+                    gl::RGB as i32,
+                    img.width() as i32,
+                    img.height() as i32,
+                    0,
+                    gl::RGB,
+                    gl::UNSIGNED_BYTE,
+                    &data[0] as *const u8 as *const c_void,
+                );
+            }
+
+            gl.TexParameteri(
+                gl::TEXTURE_CUBE_MAP,
+                gl::TEXTURE_MIN_FILTER,
+                gl::LINEAR as i32,
+            );
+            gl.TexParameteri(
+                gl::TEXTURE_CUBE_MAP,
+                gl::TEXTURE_MAG_FILTER,
+                gl::LINEAR as i32,
+            );
+            gl.TexParameteri(
+                gl::TEXTURE_CUBE_MAP,
+                gl::TEXTURE_WRAP_S,
+                gl::CLAMP_TO_EDGE as i32,
+            );
+            gl.TexParameteri(
+                gl::TEXTURE_CUBE_MAP,
+                gl::TEXTURE_WRAP_T,
+                gl::CLAMP_TO_EDGE as i32,
+            );
+            gl.TexParameteri(
+                gl::TEXTURE_CUBE_MAP,
+                gl::TEXTURE_WRAP_R,
+                gl::CLAMP_TO_EDGE as i32,
+            );
+
+            println!("texId: {}", texture_id);
+            texture_id
+        }
     }
 }
 
