@@ -7,5 +7,8 @@ pub struct GameState {
     pub game_objects : Vec<Vector3<f32>>,
     pub light_objects : Vec<Vector3<f32>>,
     pub light_colours : Vec<Vector3<f32>>,
-    pub sponza_position : Vec<Vector3<f32>>
+    
+    pub sponza_position : Vec<Vector3<f32>>,
+    pub plane_position : Vec<Vector3<f32>>,
+    pub grass_position : Vec<Vector3<f32>>
 }

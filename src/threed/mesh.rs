@@ -142,4 +142,98 @@ impl FGMesh {
             gl.ActiveTexture(gl::TEXTURE0);
         }
     }
+
+    pub fn create_plane(gl : &gl::Gl) -> (buffer::VertexArray, buffer::ArrayBuffer) {
+
+        let vao = buffer::VertexArray::new(gl);
+        let vbo = buffer::ArrayBuffer::new(gl);
+
+        let mut plane_vertices : Vec<FGVertex> = Vec::new();
+        plane_vertices.push( FGVertex {
+            pos: (5.0, 0.0, 5.0).into(),
+            tex: (2.0, 0.0).into(),
+            ..FGVertex::default()
+        });
+        plane_vertices.push( FGVertex {
+            pos: (-5.0, 0.0, 5.0).into(),
+            tex: (0.0, 0.0).into(),
+            ..FGVertex::default()
+        });
+        plane_vertices.push( FGVertex {
+            pos: (-5.0, 0.0, -5.0).into(),
+            tex: (0.0, 2.0).into(),
+            ..FGVertex::default()
+        });
+        plane_vertices.push( FGVertex {
+            pos: (5.0, 0.0, 5.0).into(),
+            tex: (2.0, 0.0).into(),
+            ..FGVertex::default()
+        });
+        plane_vertices.push( FGVertex {
+            pos: (-5.0, 0.0, -5.0).into(),
+            tex: (0.0, 2.0).into(),
+            ..FGVertex::default()
+        });
+        plane_vertices.push( FGVertex {
+            pos: (5.0, 0.0, -5.0).into(),
+            tex: (2.0, 2.0).into(),
+            ..FGVertex::default()
+        });
+
+        vao.bind();
+
+        vbo.bind();
+        vbo.static_draw_data(&plane_vertices);
+
+        FGVertex::vertex_attrib_pointers(gl);
+
+        (vao, vbo)
+    }
+
+    pub fn create_transparent_mesh(gl : &gl::Gl)  -> buffer::VertexArray {
+
+        let vao = buffer::VertexArray::new(gl);
+        let vbo = buffer::ArrayBuffer::new(gl);
+
+        let mut transparent_verts : Vec<FGVertex> = Vec::new();
+        transparent_verts.push( FGVertex {
+            pos: (0.0, 5.0, 0.0).into(),
+            tex: (0.0, 0.0).into(),
+            ..FGVertex::default()
+        });
+        transparent_verts.push( FGVertex {
+            pos: (0.0, -0.5, 0.0).into(),
+            tex: (0.0, 1.0).into(),
+            ..FGVertex::default()
+        });
+        transparent_verts.push( FGVertex {
+            pos: (1.0, -0.5, 0.0).into(),
+            tex: (1.0, 1.0).into(),
+            ..FGVertex::default()
+        });
+        transparent_verts.push( FGVertex {
+            pos: (0.0, 0.5, 0.0).into(),
+            tex: (0.0, 0.0).into(),
+            ..FGVertex::default()
+        });
+        transparent_verts.push( FGVertex {
+            pos: (1.0, -0.5, 0.0).into(),
+            tex: (1.0, 1.0).into(),
+            ..FGVertex::default()
+        });
+        transparent_verts.push( FGVertex {
+            pos: (1.0, -0.5, 0.0).into(),
+            tex: (1.0, 0.0).into(),
+            ..FGVertex::default()
+        });
+        
+        vao.bind();
+
+        vbo.bind();
+        vbo.static_draw_data(&transparent_verts);
+
+        FGVertex::vertex_attrib_pointers(gl);
+
+        vao
+    }
 }

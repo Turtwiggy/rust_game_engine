@@ -23,6 +23,7 @@ pub fn create_renderer(gl: &gl::Gl, res: &Resources) -> Renderer {
     // ----------------
     unsafe {
         gl.Enable(gl::DEPTH_TEST);
+        gl.Enable(gl::CULL_FACE);
         gl.DepthFunc(gl::LESS);
         gl.Enable(gl::STENCIL_TEST);
         gl.StencilFunc(gl::NOTEQUAL, 1, 0xFF);
@@ -54,6 +55,8 @@ impl Renderer {
         game_state: &GameState,
         cube_model: &FGModel,
         sponza_model: &FGModel,
+        plane_verts: &buffer::VertexArray,
+        transparent_verts: &buffer::VertexArray,
     ) {
         unsafe {
             // render window contents here
@@ -316,7 +319,14 @@ impl Renderer {
             }
         }
 
-   
+        {
+            //Draw a plane
+            plane_verts.bind();
+            let mut model: Matrix4<f32> = Matrix4::from_translation(game_state.plane_position[0]);
+            unsafe{
+                gl.DrawArrays(gl::TRIANGLES, 0, 36);
+            }
+        }
 
     }
 }

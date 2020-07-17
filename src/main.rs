@@ -25,11 +25,11 @@ pub mod threed;
 pub mod game;
 pub mod util;
 pub mod data;
+use threed::mesh::FGVertex;
 use crate::game_window::GameWindow;
 use crate::renderer::Renderer;
 use crate::renderer_gl::Viewport;
 use crate::threed::camera::{Camera, CameraMovement};
-use crate::threed::mesh;
 use crate::threed::mesh::{FGMesh};
 use crate::threed::model::{FGModel};
 use crate::game::GameState;
@@ -250,19 +250,24 @@ fn main() {
     let cube_model = FGModel::new(&game_window.gl, &res, "models/lizard_wizard/lizard_wizard.obj");
     println!("model size: {}", std::mem::size_of_val(&cube_model));
 
-    let sponza_model = FGModel::new(&game_window.gl, &res, "models/sponza/sponza.obj");
+    let sponza_model = FGModel::new(&game_window.gl, &res, "models/cube/cube.obj");
     println!("sponza size: {}", std::mem::size_of_val(&sponza_model));
     println!("sponza has {} meshes", sponza_model.meshes.len());
+
+    let (plane_vao, plane_vbo) = FGMesh::create_plane(&game_window.gl);
+    //let (mesh_vao, mesh_vbo) = FGMesh::create_transparent_mesh(&game_window.gl);
+
+    //let plane_mesh = FGMesh::new(gl, vertices: Vec<FGVertex>, indices: Vec<u32>)
+    //let transparent_mesh = FGMesh::new(gl, vertices: Vec<FGVertex>, indices: Vec<u32>)
 
     // Game State
     // ----------
     let mut light_positions = Vec::new();
-    light_positions.push(vec3( 1.0,  1.0,  1.0));
+    light_positions.push(vec3( 0.0,  0.0,  0.0));
     light_positions.push(vec3( 1.0,  1.0,  1.0));
     light_positions.push(vec3( 5.0,  5.0,  5.0));
     light_positions.push(vec3(-2.0, -2.0, -2.0));
     light_positions.push(vec3(-6.0, -6.0, -6.0));
-
     let mut light_colours = Vec::new();
     light_colours.push(vec3( 1.0,  1.0,  1.0));
     light_colours.push(vec3( 1.0,  0.0,  0.0));
@@ -285,11 +290,23 @@ fn main() {
     let mut sponza_position = Vec::new();
     sponza_position.push(vec3(0.0, 0.0, 0.0));
 
+    let mut plane_position = Vec::new();
+    plane_position.push(vec3(0.0, 0.0, 0.0));
+
+    let mut grass_position = Vec::new();
+    grass_position.push(vec3(0.0, 0.0, 0.0));
+    grass_position.push(vec3(1.0, 0.0, 1.0));
+    grass_position.push(vec3(2.0, 0.0, 2.0));
+    grass_position.push(vec3(3.0, 0.0, 3.0));
+    grass_position.push(vec3(4.0, 0.0, 4.0));
+
     let mut state_current: GameState = GameState {
         game_objects: cube_positions,
         light_objects: light_positions,
         light_colours: light_colours,
-        sponza_position: sponza_position
+        sponza_position: sponza_position,
+        plane_position: plane_position,
+        grass_position: grass_position
     };
     println!("gamestate bytes: {0}", std::mem::size_of::<GameState>());
 
@@ -390,7 +407,9 @@ fn main() {
             &camera,
             &state_current,
             &cube_model,
-            &sponza_model
+            &sponza_model,
+            &plane_vao,
+            &plane_vao
         );
         current_profile_information.renderer_update = time_now.elapsed().as_millis();
 
