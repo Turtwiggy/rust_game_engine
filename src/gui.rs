@@ -11,7 +11,7 @@ pub fn ui(
     //ui.show_demo_window(&mut true);
 
     //Seperate Window
-    Window::new(im_str!("Hello world"))
+    Window::new(im_str!("Profiling / Info"))
         .size([300.0, 110.0], Condition::FirstUseEver)
         .build(&ui, || {
             ui.text(format!(

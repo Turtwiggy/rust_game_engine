@@ -1,9 +1,10 @@
-use sdl2::video::FullscreenType;
-use sdl2::surface::Surface;
 
 use crate::util::resources::{Resources};
 
-pub fn create_game_window(n: &str, w: u32, h: u32) -> GameWindow {
+use sdl2::video::FullscreenType;
+use std::time::Instant;
+
+pub fn create_default(n: &str, w: u32, h: u32) -> GameWindow {
     println!("creating game window: {0}", n);
     let _sdl_context = sdl2::init().unwrap();
 
@@ -14,6 +15,9 @@ pub fn create_game_window(n: &str, w: u32, h: u32) -> GameWindow {
         gl_attr.set_context_profile(sdl2::video::GLProfile::Core);
         gl_attr.set_context_version(3, 3);
         gl_attr.set_stencil_size(1);
+
+        gl_attr.set_multisample_buffers(1);
+        gl_attr.set_multisample_samples(4);
     }
 
     let _window = _video
@@ -62,6 +66,31 @@ pub struct GameWindow {
 }
 
 impl GameWindow {
+
+    pub fn calculate_delta_time(now: Instant, last_frame : Instant ) -> f64
+    {
+        let delta = now - last_frame;
+        let mut delta_s = delta.as_secs() as f64 + delta.subsec_nanos() as f64 / 1_000_000_000.0;
+
+        if delta_s > 0.25 //Clamp delta_s to avoid spiral of death
+        {
+            delta_s = 0.25;
+        }
+
+        delta_s
+    }
+
+    pub fn new_frame(&mut self, delta_s : f64, mouse_state : &sdl2::mouse::MouseState )
+    {
+        self.imgui_sdl2.prepare_frame(
+            self.imgui.io_mut(),
+            &self.sdl_window,
+            &mouse_state
+        );
+
+        self.imgui.io_mut().delta_time = delta_s as f32;
+    }
+
     pub fn get_width_and_height(&self) -> (u32, u32) {
         return self.sdl_window.size();
     }
@@ -69,17 +98,16 @@ impl GameWindow {
     pub fn get_position(&self) -> (i32, i32) {
         return self.sdl_window.position();
     }
-
-
+    
     /*  pub enum FullscreenType {
         Off = 0,
         True = 0x00_00_00_01,
         Desktop = 0x00_00_10_01 (borderless) } */
-    pub fn set_fullscreen(&mut self, fullscreen: bool) {
+    pub fn set_fullscreen(&mut self, fullscreen : bool, new_type: FullscreenType) {
         if fullscreen {
-            let result = self.sdl_window.set_fullscreen(FullscreenType::Desktop);
+            self.sdl_window.set_fullscreen(new_type);
         } else {
-            let result = self.sdl_window.set_fullscreen(FullscreenType::Off);
+            self.sdl_window.set_fullscreen(FullscreenType::Off);
         }
     }
 
@@ -95,7 +123,6 @@ impl GameWindow {
     
     // pub fn get_monitor_refresh_rate(&self, display: i32) -> f32 {
     //     let display_mode = self.sdl_window.display_mode().unwrap();
-
     //     display_mode.refresh_rate();
     // }
 
@@ -103,11 +130,7 @@ impl GameWindow {
         return self.sdl_window.display_mode().unwrap();
     }
 
-    pub fn set_window_icon(&mut self, res : &Resources, path: &str) {
-
-        //todo better error chacking
-        let image = res.load_image(path).unwrap();
-
+    pub fn set_window_icon(&mut self, image : &sdl2::surface::Surface) {
         self.sdl_window.set_icon(&image);
     }
 

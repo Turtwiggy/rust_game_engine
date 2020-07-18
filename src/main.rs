@@ -22,27 +22,26 @@ pub mod game_window;
 pub mod renderer;
 pub mod renderer_gl;
 pub mod threed;
-pub mod game;
 pub mod util;
-pub mod data;
-use threed::mesh::FGVertex;
+pub mod game;
+//pub mod data;
+//use threed::mesh::FGVertex;
 use crate::game_window::GameWindow;
-use crate::renderer::Renderer;
+//use crate::renderer::Renderer;
 use crate::renderer_gl::Viewport;
 use crate::threed::camera::{Camera, CameraMovement};
 use crate::threed::mesh::{FGMesh};
 use crate::threed::model::{FGModel};
-use crate::threed::textures;
 use crate::game::GameState;
 use crate::util::profiling::ProfileInformation;
 use crate::util::resources::Resources;
-use crate::data::materials;
+// use crate::threed::textures;
+// use crate::data::materials;
 
-use cgmath::{vec3, Point3, Vector3};
+use cgmath::{Vector2, vec3, Point3};
 use rand::{thread_rng, Rng};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
-use sdl2::mouse::MouseButton;
 use std::path::Path;
 use std::time::Instant;
 
@@ -85,8 +84,9 @@ fn process_input(
             keycode: Some(Keycode::F),
             ..
         } => {
+            use sdl2::video::FullscreenType;
             let is_fullscreen: bool = game_window.is_fullscreen();
-            game_window.set_fullscreen(!is_fullscreen);
+            game_window.set_fullscreen(!is_fullscreen, FullscreenType::Desktop);
         }
         Event::KeyDown {
             keycode: Some(Keycode::M),
@@ -94,12 +94,6 @@ fn process_input(
         } => {
             println!("trying to capture mouse");
             game_window.toggle_grabbed();
-        }
-        Event::KeyDown{
-            keycode: Some(Keycode::N),
-            ..
-        } => {
-            game_window.capture_mouse(true)
         }
         Event::KeyDown {
             keycode: Some(Keycode::O),
@@ -201,9 +195,10 @@ fn match_camera_event(camera : &mut Camera, event: &sdl2::event::Event) {
 }
 
 fn tick(delta_time: f64, game_state: &mut GameState, timer_seconds: &f64) {
-    let mut rng = rand::thread_rng();
 
     //println!("ticking game state");
+
+    let mut rng = rand::thread_rng();
 
     //Shuffle all cube positions!
     for (i, cube_pos) in game_state.game_objects.iter_mut().enumerate() {
@@ -225,104 +220,56 @@ fn tick(delta_time: f64, game_state: &mut GameState, timer_seconds: &f64) {
 }
 
 fn main() {
+
     let res = Resources::from_relative_exe_path(Path::new("assets")).unwrap();
 
-    //Settings
-    let game_name: String = "Fighting Game".to_string();
-    let init_width: u32 = 720;
-    let init_height: u32 = 480;
+    // Default Settings
+    // ----------------
+    let name: String = "Fighting Game".to_string();
+    let w: u32 = 720;
+    let h: u32 = 480;
+    let game_icon = res.load_bmp_image("icons/game_icon.bmp").unwrap();
+
+    // Load Images & Textures
+    // ----------------------
+    // let faces = [
+    //     "skybox/skybox-default/right.jpg",
+    //     "skybox/skybox-default/left.jpg",
+    //     "skybox/skybox-default/top.jpg",
+    //     "skybox/skybox-default/bottom.jpg",
+    //     "skybox/skybox-default/back.jpg",
+    //     "skybox/skybox-default/front.jpg"
+    // ];
+    //loading this is super slow! disabled for now.
+    //let cubemap_texture : u32 =  res.load_cubemap(&game_window.gl, &faces);
+    // let cubeTexture = textures::loadTexture(&game_window.gl, "resources/textures/container.jpg");
 
     // Game Window
     // -----------
-    let mut game_window = game_window::create_game_window(&game_name, init_width, init_height);
-    game_window.set_window_icon(&res, "icons/game_icon.bmp");
+    let mut game_window = game_window::create_default(&name, w, h);
+    game_window.set_window_icon(&game_icon);
 
-    let mut viewport = renderer_gl::Viewport::for_window(init_width as i32, init_height as i32);
-    let renderer = renderer::create_renderer(&game_window.gl, &res);
-
-    // Initial Settings
-    // ----------------
-    //let current_display = game_window.get_current_display_mode();
-    //let target_fps : f64 = current_display.refresh_rate as f64;
-    //println!("Target FPS set to: {0}", target_fps);
+    let mut renderer = renderer::create_default(&game_window.gl, &res, w as i32, h as i32);
 
     // Load models 
     // -----------
-    let cube_model = FGModel::new(&game_window.gl, &res, "models/lizard_wizard/lizard_wizard.obj");
+    let cube_model = FGModel::new(&game_window.gl, &res, "models/cube/cube.obj");
     println!("model size: {}", std::mem::size_of_val(&cube_model));
 
-    let sponza_model = FGModel::new(&game_window.gl, &res, "models/cube/cube.obj");
-    println!("sponza size: {}", std::mem::size_of_val(&sponza_model));
-    println!("sponza has {} meshes", sponza_model.meshes.len());
+    let lizard_model = FGModel::new(&game_window.gl, &res, "models/lizard_wizard/lizard_wizard.obj");
+    println!("lizard size: {}", std::mem::size_of_val(&lizard_model));
+    println!("lizard has {} meshes", lizard_model.meshes.len());
 
     let (plane_vao, plane_vbo) = FGMesh::create_plane(&game_window.gl);
     //let (mesh_vao, mesh_vbo) = FGMesh::create_transparent_mesh(&game_window.gl);
 
-    //let plane_mesh = FGMesh::new(gl, vertices: Vec<FGVertex>, indices: Vec<u32>)
-    //let transparent_mesh = FGMesh::new(gl, vertices: Vec<FGVertex>, indices: Vec<u32>)
-
     // Game State
     // ----------
-    let mut light_positions = Vec::new();
-    light_positions.push(vec3( 0.0,  0.0,  0.0));
-    light_positions.push(vec3( 1.0,  1.0,  1.0));
-    light_positions.push(vec3( 5.0,  5.0,  5.0));
-    light_positions.push(vec3(-2.0, -2.0, -2.0));
-    light_positions.push(vec3(-6.0, -6.0, -6.0));
-    let mut light_colours = Vec::new();
-    light_colours.push(vec3( 1.0,  1.0,  1.0));
-    light_colours.push(vec3( 1.0,  0.0,  0.0));
-    light_colours.push(vec3( 0.0,  1.0,  0.0));
-    light_colours.push(vec3( 0.0,  0.0,  1.0));
-    light_colours.push(vec3( 0.5,  0.5,  0.5));
-
-    let mut cube_positions = Vec::new();
-    cube_positions.push(vec3(0.0, 0.0, 0.0));
-    cube_positions.push(vec3(2.0, 5.0, -15.0));
-    cube_positions.push(vec3(-1.5, -2.2, -2.5));
-    cube_positions.push(vec3(-3.8, -2.0, -12.3));
-    cube_positions.push(vec3(2.4, -0.4, -3.5));
-    cube_positions.push(vec3(-1.7, 3.0, -7.5));
-    cube_positions.push(vec3(1.3, -2.0, -2.5));
-    cube_positions.push(vec3(1.5, 2.0, -2.5));
-    cube_positions.push(vec3(1.5, 0.2, -1.5));
-    cube_positions.push(vec3(-1.3, 1.0, -1.5));
-
-    let mut sponza_position = Vec::new();
-    sponza_position.push(vec3(0.0, 0.0, 0.0));
-
-    let mut plane_position = Vec::new();
-    plane_position.push(vec3(0.0, 5.0, 0.0));
-
-    let mut grass_position = Vec::new();
-    grass_position.push(vec3(0.0, 0.0, 0.0));
-    grass_position.push(vec3(1.0, 0.0, 1.0));
-    grass_position.push(vec3(2.0, 0.0, 2.0));
-    grass_position.push(vec3(3.0, 0.0, 3.0));
-    grass_position.push(vec3(4.0, 0.0, 4.0));
-
-    let mut state_current: GameState = GameState {
-        game_objects: cube_positions,
-        light_objects: light_positions,
-        light_colours: light_colours,
-        sponza_position: sponza_position,
-        plane_position: plane_position,
-        grass_position: grass_position
-    };
-    println!("gamestate bytes: {0}", std::mem::size_of::<GameState>());
+    let mut state_current = game::game_state::create_default_gamestate();
+    println!("gamestate bytes: {0}", std::mem::size_of_val(&state_current));
 
     // Skybox
     // ------
-    // let cubeTexture = textures::loadTexture(&game_window.gl, "resources/textures/container.jpg");
-    let faces = [
-        "skybox/skybox-default/right.jpg",
-        "skybox/skybox-default/left.jpg",
-        "skybox/skybox-default/top.jpg",
-        "skybox/skybox-default/bottom.jpg",
-        "skybox/skybox-default/back.jpg",
-        "skybox/skybox-default/front.jpg"
-    ];
-    let cubemap_texture : u32 =  res.load_cubemap(&game_window.gl, &faces);
     let (cubemap_vao, cubemap_vbo) = FGMesh::create_skybox_vertices(&game_window.gl);
 
     // Camera
@@ -345,14 +292,17 @@ fn main() {
     // ---------
     let mut event_pump = game_window.sdl_context.event_pump().unwrap();
     let mut last_frame = Instant::now();
-    //let mut seconds_since_last_fixed_tick: f64 = 0.0;
     'running: loop {
 
+        // Begin profiling
+        // ---------------
+        let profiler_time_continuous = Instant::now();
+        let mut profiler_time : Instant;
+        
         // Events
         // ------
-        let mut time_now = Instant::now();
-        let mut time_continuous = Instant::now();
-        
+        profiler_time = Instant::now();
+
         for event in event_pump.poll_iter() {
             game_window
                 .imgui_sdl2
@@ -362,60 +312,66 @@ fn main() {
                 continue;
             }
 
-            process_events(&mut game_window, &event, &mut viewport );
+            process_events(&mut game_window, &event, &mut renderer.viewport);
             let ok = process_input(&mut game_window, &event, &mut camera );
             if !ok {
                 break 'running;
             }
         }   
-        // relative_mouse_state() twice and get a false position reading
-        let mouse_state = event_pump.relative_mouse_state();
-        current_profile_information.events = time_now.elapsed().as_millis();
 
-        //Prepare frame
-        time_now = Instant::now();
-        game_window.imgui_sdl2.prepare_frame(
-            game_window.imgui.io_mut(),
-            &game_window.sdl_window,
-            &event_pump.mouse_state(),
-        );
-        let now = Instant::now();
-        let delta = now - last_frame;
-        let mut delta_s = delta.as_secs() as f64 + delta.subsec_nanos() as f64 / 1_000_000_000.0;
-        timer_seconds += delta_s;
-        if delta_s > 0.25 //Clamp delta_s to avoid spiral of death
+        // Mouse Events
+        // ------------
+        let mouse_state = &event_pump.mouse_state();
+        let rel_mouse_state = event_pump.relative_mouse_state();
+        // Invert mouse Y
+        let invert_mouse_y : bool = true;
+        let mut rel_mouse_y = rel_mouse_state.y();
+        if invert_mouse_y
         {
-            delta_s = 0.25;
+            rel_mouse_y *= -1;
         }
+        //Mouse Pos
+        let rel_mouse_pos : Vector2<i32> = Vector2 {
+            x: rel_mouse_state.x(),
+            y: rel_mouse_y,
+        };
+        current_profile_information.events = profiler_time.elapsed().as_millis();
+
+        // New frame
+        // ---------
+        profiler_time = Instant::now();
+
+        let now = Instant::now();
+        let delta_s = GameWindow::calculate_delta_time(now, last_frame);
         last_frame = now;
-        game_window.imgui.io_mut().delta_time = delta_s as f32;
-        current_profile_information.frame_start = time_now.elapsed().as_millis();
+        timer_seconds += delta_s;
+
+        game_window.new_frame(delta_s, &mouse_state);
+
+        current_profile_information.frame_start = profiler_time.elapsed().as_millis();
 
         // Update Camera
         // -------------
-        time_now = Instant::now();
-        let invert_mouse : bool = true;
-        let mut y : i32 = mouse_state.y();
+        profiler_time = Instant::now();
+
         if game_window.get_mouse_grabbed()
         {
-            if invert_mouse
-            {
-                y *= -1;
-            }
-            camera.ProcessMouseMovement(mouse_state.x() as f32, y as f32, true);
+            camera.ProcessMouseMovement(rel_mouse_pos.x as f32, rel_mouse_pos.y as f32, true);
         };
         camera.Update(delta_s);
-        current_profile_information.camera_update = time_now.elapsed().as_millis();
+        current_profile_information.camera_update = profiler_time.elapsed().as_millis();
 
         // Update Game State
         // -----------------
-        time_now = Instant::now();
+        profiler_time = Instant::now();
+
         tick(delta_s, &mut state_current, &timer_seconds); //this update's state_current
-        current_profile_information.gamestate_update = time_now.elapsed().as_millis();
+        current_profile_information.gamestate_update = profiler_time.elapsed().as_millis();
 
         // Update Rendering
         // ---------
-        time_now = Instant::now();
+        profiler_time = Instant::now();
+
         renderer.render(
             &game_window.gl,
             game_window.sdl_window.size(),
@@ -423,15 +379,15 @@ fn main() {
             &state_current,
             //models and textures below... could be improved
             &cube_model,
-            &sponza_model,
+            &lizard_model,
             &plane_vao,
-            &cubemap_texture,
-            &cubemap_vao
+            //&cubemap_texture,
+            //&cubemap_vao
         );
-        current_profile_information.renderer_update = time_now.elapsed().as_millis();
+        current_profile_information.renderer_update = profiler_time.elapsed().as_millis();
 
-        // Show Profiling 
-        // ---------
+        // Calculate Average FPS
+        // ---------------------
         fps_buffer[fps_buffer_idx] = 1.0 / delta_s as f32;
         fps_buffer_idx = (fps_buffer_idx + 1) % fps_buffer_length;
         let fps_buffer_avg = fps_buffer.iter().sum::<f32>() / fps_buffer.len() as f32;
@@ -439,24 +395,28 @@ fn main() {
 
         // UI
         // --
-        time_now = Instant::now();
+        profiler_time = Instant::now();
+
         gui::ui(&mut game_window, timer_seconds, fps_buffer_avg, &previous_profile_information);
-        current_profile_information.gui_update = time_now.elapsed().as_millis();
+        current_profile_information.gui_update = profiler_time.elapsed().as_millis();
 
         // End Frame
         // ---------
-        time_now = Instant::now();
+        profiler_time = Instant::now();
+
         game_window.sdl_window.gl_swap_window();
-        current_profile_information.frame_end = time_now.elapsed().as_millis();
+        current_profile_information.frame_end = profiler_time.elapsed().as_millis();
 
-        // ::std::thread::sleep(::std::time::Duration::new(0, (1000000000 as f64 / target_fps)));
-
-        current_profile_information.full_loop = time_continuous.elapsed().as_millis();
+        current_profile_information.full_loop = profiler_time_continuous.elapsed().as_millis();
         previous_profile_information = current_profile_information.clone();
     }
 }
 
+// ::std::thread::sleep(::std::time::Duration::new(0, (1000000000 as f64 / target_fps)));
 
+//Code below is for a fixed timestep, as/when physics is implemented
+
+//let mut seconds_since_last_fixed_tick: f64 = 0.0;
 // //let mut state_previous: GameState = state_current.clone();
 // // Game Logic Tick - X ticks per second
 // // ------------------------------------
@@ -467,7 +427,7 @@ fn main() {
 //     //Could probably do this better eventually
 //     state_previous = state_current.clone();
 // 
-//     TICK HERE
+//     tick();
 //     seconds_since_last_fixed_tick -= SECONDS_PER_GAMETICK;
 // }
 

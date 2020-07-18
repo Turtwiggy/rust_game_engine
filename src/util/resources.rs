@@ -77,7 +77,7 @@ impl Resources {
         return obj;
     }
 
-    pub fn load_image(&self, resource_name: &str) -> Result<sdl2::surface::Surface, String> {
+    pub fn load_bmp_image(&self, resource_name: &str) -> Result<sdl2::surface::Surface, String> {
         let path = resource_name_to_path(&self.root_path, resource_name);
         println!("loading image from: {0}", path.display());
 
