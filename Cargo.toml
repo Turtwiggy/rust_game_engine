@@ -27,7 +27,7 @@ cgmath = "*"
 c_string = "*"
 rand = "*"
 tobj = "2.0.2"
-image = "*"
+image = "0.18.0"
 
 [build-dependencies]
 walkdir = "2.1"
