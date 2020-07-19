@@ -34,10 +34,16 @@ pub fn create_default(gl: &gl::Gl, res : &Resources, w : i32, h : i32) -> Render
 
         //msaa
         gl.Enable(gl::MULTISAMPLE);
+
+        //From now on your rendered images will be gamma corrected and as this is done by the hardware it is completely free.
+        //Something you should keep in mind with this approach (and the other approach) is that gamma correction (also) transforms the colors from linear space to non-linear space so it is very important you only do gamma correction at the last and final step. 
+        //If you gamma-correct your colors before the final output, all subsequent operations on those colors will operate on incorrect values. 
+        //For instance, if you use multiple framebuffers you probably want intermediate results passed in between framebuffers to remain in linear-space and only have the last framebuffer apply gamma correction before being sent to the monitor.
+        gl.Enable(gl::FRAMEBUFFER_SRGB);
     }
 
     return Renderer {
-        shader_manager, viewport
+        shader_manager, viewport,
     };
 }
 
@@ -48,7 +54,7 @@ pub struct Renderer {
 
 impl Renderer {
     pub fn render(
-        &self,
+        &mut self,
         gl: &gl::Gl,
         window_size: (u32, u32),
         camera: &Camera,
@@ -154,7 +160,7 @@ impl Renderer {
             lit_shader.set_vec3(c_str!("material.diffuse"), 1.0, 0.5, 0.31);
             lit_shader.set_vec3(c_str!("material.specular"), 0.5, 0.5, 0.5);
             lit_shader.set_float(c_str!("material.shininess"), 32.0);
-
+            
             // create transformations
             // NOTE: cgmath requires axis vectors to be normalized!
             // let model: Matrix4<f32> = Matrix4::from_axis_angle(

@@ -42,8 +42,9 @@ use cgmath::{Vector2, vec3, Point3};
 use rand::{thread_rng, Rng};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
-use std::path::Path;
 use std::time::Instant;
+use std::borrow::Cow;
+use std::path::{PathBuf, Path};
 
 //Game Settings
 // const GAME_TICKS_PER_SECOND: u32 = 2;
@@ -219,6 +220,37 @@ fn tick(delta_time: f64, game_state: &mut GameState, timer_seconds: &f64) {
     game_state.light_objects[0] = light_pos;
 }
 
+use sdl2::audio::{AudioCallback, AudioSpecDesired,AudioSpecWAV,AudioCVT};
+struct Sound {
+    data: Vec<u8>,
+    volume: f32,
+    pos: usize,
+}
+
+impl AudioCallback for Sound {
+    type Channel = u8;
+
+    fn callback(&mut self, out: &mut [u8]) {
+        for dst in out.iter_mut() {
+            // With channel type u8 the "silence" value is 128 (middle of the 0-2^8 range) so we need
+            // to both fill in the silence and scale the wav data accordingly. Filling the silence
+            // once the wav is finished is trivial, applying the volume is more tricky. We need to:
+            // * Change the range of the values from [0, 255] to [-128, 127] so we can multiply
+            // * Apply the volume by multiplying, this gives us range [-128*volume, 127*volume]
+            // * Move the resulting range to a range centered around the value 128, the final range
+            //   is [128 - 128*volume, 128 + 127*volume] – scaled and correctly positioned
+            //
+            // Using value 0 instead of 128 would result in clicking. Scaling by simply multiplying
+            // would not give correct results.
+            let pre_scale = *self.data.get(self.pos).unwrap_or(&128);
+            let scaled_signed_float = (pre_scale as f32 - 128.0) * self.volume;
+            let scaled = (scaled_signed_float + 128.0) as u8;
+            *dst = scaled;
+            self.pos += 1;
+        }
+    }
+}
+
 fn main() {
 
     let res = Resources::from_relative_exe_path(Path::new("assets")).unwrap();
@@ -279,6 +311,38 @@ fn main() {
         ..Camera::default()
     };
 
+    // Audio
+    // -----
+    let wav_file : Cow<'static, Path> = match std::env::args().nth(1) {
+        None => Cow::from(Path::new("./assets/audio/example_wav.wav")),
+        Some(s) => Cow::from(PathBuf::from(s))
+    };
+    let mut audio_subsystem = game_window.sdl_context.audio().unwrap();
+    let desired_spec = AudioSpecDesired {
+        freq: Some(44_100),
+        channels: Some(1), // mono
+        samples: None      // default
+    };
+
+    let device = audio_subsystem.open_playback(None, &desired_spec, |spec| {
+        let wav = AudioSpecWAV::load_wav(wav_file)
+            .expect("Could not load test WAV file");
+
+        let cvt = AudioCVT::new(
+                wav.format, wav.channels, wav.freq,
+                spec.format, spec.channels, spec.freq)
+            .expect("Could not convert WAV file");
+
+        let data = cvt.convert(wav.buffer().to_vec());
+
+        // initialize the audio callback
+        Sound {
+            data: data,
+            volume: 0.25,
+            pos: 0,
+        }
+    }).unwrap();
+
     // FPS Info & Profiling
     // --------
     const fps_buffer_length : usize = 50;
@@ -293,6 +357,8 @@ fn main() {
     let mut event_pump = game_window.sdl_context.event_pump().unwrap();
     let mut last_frame = Instant::now();
     'running: loop {
+
+        device.resume();
 
         // Begin profiling
         // ---------------

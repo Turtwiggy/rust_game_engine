@@ -11,6 +11,7 @@ path = "src/main.rs"
 [dependencies.sdl2]
 version = "0.34.2"
 default-features = false
+#note, the features "image", "mixer" does not work with the "bundled" feature
 features = ["bundled", "static-link"]
 
 [dependencies]
