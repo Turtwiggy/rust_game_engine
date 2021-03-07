@@ -1,2 +1,0 @@
-call cargo run
-pause
