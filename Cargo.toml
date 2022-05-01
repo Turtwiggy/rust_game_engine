@@ -9,30 +9,25 @@ name = "SparkEngine"
 path = "src/main.rs"
 
 [dependencies.sdl2]
-version = "0.34.2"
+version = "0.35"
 default-features = false
-#note, the features "image", "mixer" does not work with the "bundled" feature
+# note, the features "image", "mixer" does not work with the "bundled" feature
 features = ["bundled", "static-link"]
 
 [dependencies]
 gl = { path = "lib/gl" }
-render_gl_derive = {path = "lib/render_gl_derive"}
-imgui = "0.4.0"
-imgui-sdl2 = "0.11.0"
-imgui-opengl-renderer = "0.8"
-failure = "*"
-vec-2-10-10-10 = "0.1.2"
-half = "1.1.1"
-nalgebra = "0.18"
-cgmath = "*"
-c_string = "*"
-rand = "*"
-tobj = "2.0.2"
-image = "0.18.0"
+image = "*"
+imgui = "0.8.2"
+imgui-sdl2 = "0.15.0"
+imgui-opengl-renderer = "0.11.1"
+# failure = "*"
+# vec-2-10-10-10 = "0.1.2"
+# half = "1.1.1"
+# nalgebra = "0.18"
+# cgmath = "*"
+# c_string = "*"
+# rand = "*"
 
 [build-dependencies]
 walkdir = "2.1"
-
-[features]
-gl_debug = ["gl/debug"]
 
